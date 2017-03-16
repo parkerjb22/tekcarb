@@ -31,7 +31,17 @@
             TeamService.getPlayers().then(function(players) {
                 vm.players = players
             })
+
+            vm.selectedTeam = ''
         }
+
+        vm.selectTeam = (function (name) {
+            if (vm.selectedTeam === name){
+                vm.selectedTeam = ''
+            } else {
+                vm.selectedTeam = name
+            }
+        })
     }
 
 })();

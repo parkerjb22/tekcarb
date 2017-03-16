@@ -79,23 +79,38 @@ def updateRoundFile(region, rnd, seed):
 	rounds = readFromFile('rounds')
 
 	if (rnd == 2):
-		if (seed == 1 or seed == 16):
+		if seed in [1, 16]:
 			matchup, slot = 0, 0
-		if (seed == 8 or seed == 9):
+		elif seed in [8, 9]:
 			matchup, slot = 0, 1
-		if (seed == 5 or seed == 12):
+		elif seed in [5, 12]:
 			matchup, slot = 1, 0
-		if (seed == 4 or seed == 13):
+		elif seed in [4, 13]:
+			matchup, slot = 1, 1
+		elif seed in [6, 11]:
+			matchup, slot = 2, 0
+		elif seed in [3, 14]:
+			matchup, slot = 2, 1
+		elif seed in [7, 10]:
+			matchup, slot = 3, 0
+		elif seed in [2, 15]:
+			matchup, slot = 3, 1
+
+	elif rnd == 3:
+		if seed in [1, 16, 8, 9]:
+			matchup, slot = 0, 0
+		elif seed in [5, 12, 4, 13]:
+			matchup, slot = 0, 1
+		elif seed in [6, 11, 3, 14]:
+			matchup, slot = 1, 0
+		elif seed in [7, 10, 2, 15]:
 			matchup, slot = 1, 1
 
-		if (seed == 6 or seed == 11):
-			matchup, slot = 2, 0
-		if (seed == 3 or seed == 14):
-			matchup, slot = 2, 1
-		if (seed == 7 or seed == 10):
-			matchup, slot = 3, 0
-		if (seed == 2 or seed == 15):
-			matchup, slot = 3, 1
+	elif rnd == 4:
+		if seed in [1, 16, 8, 9, 5, 12, 4, 13]:
+			matchup, slot = 0, 0
+		elif seed in [6, 11, 3, 14, 7, 10, 2, 15]:
+			matchup, slot = 0, 1
 
 	rounds[region][round_str][matchup][slot] = seed
 	writeToFile('rounds', rounds)
