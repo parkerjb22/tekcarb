@@ -1,0 +1,18 @@
+<div data-ng-repeat="i in [1,2,3,4,5]" id="round{{ i }}" class="round">
+  <h3>
+    Round One (2017 NCAA Men's Basketball Tournament) 
+  </h3>
+
+  <div ng-repeat="(key, region) in vm.rounds[i] track by $index" class="region region{{ $index + 1 }}">
+
+    <h4 class="region{{ $index + 1 }} first_region">{{ key }}</h4>
+
+    <div ng-repeat="matchup in region track by $index" id="match{{ $index }}" class="match m{{ $index + 1 }}">
+      <p ng-repeat="team in matchup.teams track by $index" class="slot slot{{ $index + 1 }} {{ team.player }}">
+        <span class="seed">{{ team.seed }}</span> {{ team.team }}
+      </p>
+    </div>
+
+  </div>
+
+</div>
