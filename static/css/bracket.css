@@ -56,9 +56,7 @@ table.gridtable td.title {
   top: 0;
   width: 950px;
 }
-#bracket .round strong, #bracket .round strong span.seed, #bracket .round strong span.score {
-  color: #4aa5ef;
-}
+
 #bracket #round2 {
   left: 115px;
   width: 720px;
@@ -304,23 +302,31 @@ table.gridtable td.title {
   left: 1000px;
 }
 .Alex {
-  background: #FF9966
+  background: #4af5af
+
 }
 .Jason {
-  background: #4aa5ef
+  background: yellow
 }
 .Dan {
-  background: #FFCC00
+  background: orange
 }
 .Steve {
-  background: #99FF66
+  background: red
 }
 .Evan {
-  background: #FF99FF
+  background: #4a959f
+
 }
 .Justin {
-  background: #4af5af
+  background: green
+
 }
 .Ryan {
-  background: #4a959f
+  background: #FF99FF
 }
+
+.Ghost {
+  background: grey
+}
+
