@@ -1,10 +1,13 @@
 from flask import Flask, render_template, jsonify
-import json
+import json, os
 
 app = Flask(__name__)
 
 def readFromFile(fileName):
-	with open('data/%s.json' % fileName) as data_file:
+	my_dir = os.path.dirname(__file__)
+	file_path = os.path.join(my_dir, 'data/%s.json' % fileName)
+
+	with open(file_path) as data_file:
 		data = json.load(data_file)
 		return data
 
@@ -32,12 +35,14 @@ def getRound(rnd):
 					playersAndTeams[t[1]] = {"team": t[0], "player": key, "seed": t[1]}
 
 		for game in rounds.get(region).get(rndStr):
+			t1, t2 = None, None
 			if game:
-				t1 = playersAndTeams[game[0]]
-				t2 = playersAndTeams[game[1]]
-				pairs.append({"teams": [t1, t2]})
-			else:
-				pairs.append({"teams": [None, None]})
+				if game[0] is not None:
+					t1 = playersAndTeams[game[0]]
+				if game[1] is not None:
+					t2 = playersAndTeams[game[1]]
+
+			pairs.append({"teams": [t1, t2]})
 
 		result[region] = pairs
 
