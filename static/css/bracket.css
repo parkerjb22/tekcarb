@@ -84,6 +84,7 @@ table.gridtable td.title {
   right: 0px;
 }
 #bracket .match {
+  border-radius: 3px 3px 3px 3px;
   border: 1px solid #444;
   padding: 0;
   width: 114px;
@@ -257,18 +258,28 @@ table.gridtable td.title {
   position: absolute;
   left: 0;
   right: 0;
-  padding: 0 4px;
+  padding-left: 3px;
+  /*padding: 3px 4px;*/
 }
 #bracket .match .slot1 {
+  border-bottom: 1px solid #666;
   top: 0px;
 }
 #bracket .match .slot2 {
+  border-top: 1px solid #666;
   bottom: 0px;
 }
 #bracket .match .score {
-  position: absolute;
-  right: 4px;
+  /*position: absolute;*/
+  /*right: 4px;*/
   font-style: normal;
+
+  display: inline;
+  float: right;
+  border-left: 1px solid #AAA;
+  padding-left: 10px;
+  padding-right: 10px;
+  background: #EEE;
 }
 #bracket .match .seed {
   font-size: 10px;
