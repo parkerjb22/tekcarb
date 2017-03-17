@@ -16,12 +16,19 @@
 
             getTeams()
 
+            TeamService.getPlayers().then(function(players) {
+                vm.players = players
+            })
+
             vm.selectedTeam = ''
+            vm.buttonText = 'Update Scores'
         }
 
         vm.updatescores = (function(){
+            vm.buttonText = "Updating..."
             TeamService.updatescores().then(function() {
                 getTeams()
+                vm.buttonText = 'Update Scores'
             })
         })
 
@@ -37,10 +44,6 @@
             })
             TeamService.getTeams(4).then(function(teams) {
                 vm.rounds[4] = vm.orderTeams(teams)
-            })
-
-            TeamService.getPlayers().then(function(players) {
-                vm.players = players
             })
         }
 

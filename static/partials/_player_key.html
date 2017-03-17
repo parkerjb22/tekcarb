@@ -1,6 +1,12 @@
 <div class="key">
     <div>
-    	<button ng-click="vm.updatescores()" type="button" class="btn btn-primary">Update Scores</button>
+    	<button 
+    		type="button" 
+    		class="btn btn-primary btn-lg " 
+    		ng-click="vm.updatescores()">
+    		{{ vm.buttonText }}
+    	</button>
+
     </div>
     <div ng-repeat="player in vm.players" ng-mouseenter="vm.selectTeam(player)" ng-mouseleave="vm.selectTeam(player)">
       <span style="font-size:8px; padding-left:15px" class="{{ player }}">&nbsp;</span>
