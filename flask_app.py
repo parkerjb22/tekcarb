@@ -102,8 +102,11 @@ def get_game_score(game_id):
 			score = int(scoreTag.text)
 		result[tag.text] = score
 
-	lineDivTag = soup.find("div", {"class": "odds-details"})
-	fav, line = lineDivTag.findNext("li").text.replace("Line: ", "").split()
+	try:
+		lineDivTag = soup.find("div", {"class": "odds-details"})
+		fav, line = lineDivTag.findNext("li").text.replace("Line: ", "").split()
+	except:
+		fav, line = None, None
 
 	return result, fav, line
 
