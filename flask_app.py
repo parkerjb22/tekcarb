@@ -52,8 +52,8 @@ def getRound(rnd):
 			fav, spread = None, 0
 			if game:
 				if len(game) == 6:
-					spread = game[4]
-					fav = game[5]
+					fav = game[4]
+					spread = game[5]
 				t1 = getit(0, playersAndTeams, game)
 				t2 = getit(1, playersAndTeams, game)
 
@@ -136,7 +136,7 @@ def setscore(rnd, region, seed1, score1, seed2, score2, fav, spread):
 	matchup, slot = getMatchupAndSlot(rnd, seed2)
 	rounds[region][round_str][matchup][slot+2] = score2
 	rounds[region][round_str][matchup][4] = fav
-	rounds[region][round_str][matchup][5] = "-%s" % spread
+	rounds[region][round_str][matchup][5] = spread
 
 	writeToFile('rounds', rounds)
 	return 'set em'
