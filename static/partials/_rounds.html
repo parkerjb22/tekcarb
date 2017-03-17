@@ -10,7 +10,7 @@
     <div ng-repeat="matchup in region track by $index" id="match{{ $index }}" class="match m{{ $index + 1 }}">
       <p ng-repeat="team in matchup.teams track by $index" 
         class="slot slot{{ $index + 1 }} {{ (vm.selectedTeam === team.player || vm.selectedTeam === '') ? team.player : '' }}">
-        <strong><span class="seed">{{ team.seed }}</span> {{ team.team }}</strong>
+        <strong><span class="seed">{{ team.seed }}</span> {{ team.team }}<em class="score">{{ team.score}}</em></strong>
       </p>
     </div>
 

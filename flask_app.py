@@ -1,4 +1,6 @@
 from flask import Flask, render_template, jsonify, abort
+from bs4 import BeautifulSoup
+import requests
 import json, os
 
 app = Flask(__name__)
@@ -46,24 +48,95 @@ def getRound(rnd):
 					playersAndTeams[t[1]] = {"team": t[0], "player": key, "seed": t[1]}
 
 		for game in rounds.get(region).get(rndStr):
-			t1, t2 = None, None
+			scores, t1, t2 = None, None, None
+			fav, spread = None, 0
 			if game:
-				if game[0] is not None:
-					t1 = playersAndTeams[game[0]]
-				if game[1] is not None:
-					t2 = playersAndTeams[game[1]]
+				if len(game) == 3:
+					scores, fav, spread = get_game_score(game[2])
+				elif len(game) == 6:
+					spread = game[4]
+					fav = game[5]
+				t1 = getit(0, scores, playersAndTeams, game)
+				t2 = getit(1, scores, playersAndTeams, game)
 
-			pairs.append({"teams": [t1, t2]})
+
+			pairs.append({"teams": [t1, t2], "spread": spread, "fav": fav})
 
 		result[region] = pairs
 
 	return jsonify(result)	
 
 
+def getit(i, scores, playersAndTeams, game):
+	t1 = None
+	if game[i] is not None:
+		team_name = playersAndTeams[game[i]].get("team")
+		if len(game) == 6:
+			team_score = game[i + 2]
+		elif scores is not None:
+			team_score = scores.get(team_name)
+		else:
+			team_score = 0
+		t1 = playersAndTeams[game[i]]
+		t1["score"] = team_score
+
+	return t1
+
+
 @app.route("/")
 def index():
 	return render_template('index.html')
 
+
+def get_game_score(game_id):
+	req = 'http://www.espn.com/mens-college-basketball/game?gameId=%s' % game_id
+	soup = getSoup(req)
+
+	result = {}
+
+	for tag in soup.find_all("td", {"class": "team-name"}):
+		scoreTag = tag.findNext('td', {"class": "final-score"})
+		if scoreTag is None or scoreTag.text is None:
+			score = 0
+		else:
+			score = int(scoreTag.text)
+		result[tag.text] = score
+
+	lineDivTag = soup.find("div", {"class": "odds-details"})
+	fav, line = lineDivTag.findNext("li").text.replace("Line: ", "").split()
+
+	return result, fav, line
+
+
+@app.route("/api/setscore/<int:rnd>/<region>/<int:seed1>/<int:score1>/<int:seed2>/<int:score2>/<fav>/<spread>")
+def setscore(rnd, region, seed1, score1, seed2, score2, fav, spread):
+	round_str = "round%s" % rnd
+	rounds = readFromFile('rounds')
+	matchup, slot = getMatchupAndSlot(rnd, seed1)
+	while len(rounds[region][round_str][matchup]) < 6:
+		rounds[region][round_str][matchup].append(None)
+
+	rounds[region][round_str][matchup][slot+2] = score1
+	matchup, slot = getMatchupAndSlot(rnd, seed2)
+	rounds[region][round_str][matchup][slot+2] = score2
+	rounds[region][round_str][matchup][4] = fav
+	rounds[region][round_str][matchup][5] = "-%s" % spread
+
+	writeToFile('rounds', rounds)
+	return 'set em'
+
+@app.route("/api/setgameid/<int:rnd>/<region>/<int:seed>/<int:game_id>")
+def setgameid(rnd, region, seed, game_id):
+	round_str = "round%s" % rnd
+	rounds = readFromFile('rounds')
+
+	matchup, slot = getMatchupAndSlot(rnd, seed)
+
+	if len(rounds[region][round_str][matchup]) == 2:
+		rounds[region][round_str][matchup].append(game_id)
+
+	writeToFile('rounds', rounds)
+	return 'set em'
 
 @app.route("/api/update/<player_name>/<int:rnd>/<region>/<int:seed>")
 def updateTables(player_name, rnd, region, seed):
@@ -78,7 +151,48 @@ def updateRoundFile(region, rnd, seed):
 	round_str = "round%s" % rnd
 	rounds = readFromFile('rounds')
 
-	if (rnd == 2):
+	matchup, slot = getMatchupAndSlot(rnd, seed)
+
+	rounds[region][round_str][matchup][slot] = seed
+	writeToFile('rounds', rounds)
+
+def getMatchupAndSlot(rnd, seed):
+	matchup, slot = None, None
+	if rnd == 1:
+		if seed == 1:
+			matchup, slot = 0, 0
+		elif seed == 16:
+			matchup, slot = 0, 1
+		elif seed == 8:
+			matchup, slot = 1, 0
+		elif seed == 9:
+			matchup, slot = 1, 1
+		elif seed == 5:
+			matchup, slot = 2, 0
+		elif seed == 12:
+			matchup, slot = 2, 1
+		elif seed == 4:
+			matchup, slot = 3, 0
+		elif seed == 13:
+			matchup, slot = 3, 1
+		elif seed == 6:
+			matchup, slot = 4, 0
+		elif seed == 11:
+			matchup, slot = 4, 1
+		elif seed == 3:
+			matchup, slot = 5, 0
+		elif seed == 14:
+			matchup, slot = 5, 1
+		elif seed == 7:
+			matchup, slot = 6, 0
+		elif seed == 10:
+			matchup, slot = 6, 1
+		elif seed == 2:
+			matchup, slot = 7, 0
+		elif seed == 15:
+			matchup, slot = 7, 1
+
+	if rnd == 2:
 		if seed in [1, 16]:
 			matchup, slot = 0, 0
 		elif seed in [8, 9]:
@@ -112,8 +226,7 @@ def updateRoundFile(region, rnd, seed):
 		elif seed in [6, 11, 3, 14, 7, 10, 2, 15]:
 			matchup, slot = 0, 1
 
-	rounds[region][round_str][matchup][slot] = seed
-	writeToFile('rounds', rounds)
+	return matchup, slot
 
 def updatePlayerFile(player, rnd, team_id):
 	round_str = "round%s" % rnd
@@ -135,6 +248,11 @@ def getTeamBySeed(region, seed):
 
 	return int(team_id), team
 
+def getSoup(url):
+    html = requests.get(url)
+    text = html.text
+    soup = BeautifulSoup(text, "html.parser")
+    return soup
 
 if __name__ == '__main__':
 	app.run(host='0.0.0.0', port=5050)
