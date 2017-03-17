@@ -18,9 +18,15 @@
             get: { method: 'GET', params: {}, isArray: false }
         })
 
+        var scoreResource = $resource('api/updatescore', {id: "@id"}, {
+            query: { method: 'GET', params: {}, isArray: true },
+            get: { method: 'GET', params: {}, isArray: false }
+        })
+
         return {
             getTeams: getTeams,
-            getPlayers: getPlayers
+            getPlayers: getPlayers,
+            updatescores: updatescores
         }
 
         function getTeams(round) {
@@ -29,6 +35,10 @@
 
         function getPlayers() {
             return playerResource.query().$promise
+        }
+
+        function updatescores() {
+            return scoreResource.get().$promise
         }
     }
        

@@ -48,26 +48,26 @@ table.gridtable td.title {
 }
 #bracket {
   margin-top: 15px;
-  height: 1000px;
+  height: 775px;
   position: relative;
 }
 #bracket .round {
   position: absolute;
   top: 0;
-  width: 950px;
+  width: 1140px;
 }
 
 #bracket #round2 {
-  left: 115px;
-  width: 720px;
+  left: 140px;
+  width: 860px;
 }
 #bracket #round3 {
-  left: 230px;
-  width: 490px;
+  left: 280px;
+  width: 580px;
 }
 #bracket #round4 {
-  left: 345px;
-  width: 260px;
+  left: 420px;
+  width: 300px;
 }
 #bracket #round5 {
   left: 280px;
@@ -87,114 +87,114 @@ table.gridtable td.title {
   border-radius: 3px 3px 3px 3px;
   border: 1px solid #444;
   padding: 0;
-  width: 114px;
+  width: 140px;
   position: absolute;
   font-size: 12px;
 }
 #bracket #round1 .match {
-  height: 30px;
+  height: 40px;
 }
 #bracket #round1 .m1 {
   top: 0;
 }
 #bracket #round1 .m2 {
-  top: 40px;
+  top: 45px;
 }
 #bracket #round1 .m3 {
-  top: 80px;
+  top: 90px;
 }
 #bracket #round1 .m4 {
-  top: 120px;
+  top: 135px;
 }
 #bracket #round1 .m5 {
-  top: 160px;
+  top: 180px;
 }
 #bracket #round1 .m6 {
-  top: 200px;
+  top: 225px;
 }
 #bracket #round1 .m7 {
-  top: 240px;
+  top: 270px;
 }
 #bracket #round1 .m8 {
-  top: 280px;
+  top: 315px;
 }
 #bracket #round1 .region2 .m1, #bracket #round1 .region4 .m1 {
-  top: 350px;
+  top: 375px;
 }
 #bracket #round1 .region2 .m2, #bracket #round1 .region4 .m2 {
-  top: 390px;
+  top: 420px;
 }
 #bracket #round1 .region2 .m3, #bracket #round1 .region4 .m3 {
-  top: 430px;
+  top: 465px;
 }
 #bracket #round1 .region2 .m4, #bracket #round1 .region4 .m4 {
-  top: 470px;
-}
-#bracket #round1 .region2 .m5, #bracket #round1 .region4 .m5 {
   top: 510px;
 }
+#bracket #round1 .region2 .m5, #bracket #round1 .region4 .m5 {
+  top: 555px;
+}
 #bracket #round1 .region2 .m6, #bracket #round1 .region4 .m6 {
-  top: 550px;
+  top: 600px;
 }
 #bracket #round1 .region2 .m7, #bracket #round1 .region4 .m7 {
-  top: 590px;
+  top: 645px;
 }
 #bracket #round1 .region2 .m8, #bracket #round1 .region4 .m8 {
-  top: 630px;
+  top: 690px;
 }
 #bracket #round2 .match {
-  height: 39px;
-  margin-top: 16px;
+  height: 67px;
+  margin-top: 9px;
 }
 #bracket #round2 .m1 {
   top: 0;
 }
 #bracket #round2 .m2 {
-  top: 80px;
+  top: 90px;
 }
 #bracket #round2 .m3 {
-  top: 160px;
+  top: 180px;
 }
 #bracket #round2 .m4 {
-  top: 240px;
+  top: 270px;
 }
 #bracket #round2 .region2 .m1, #bracket #round2 .region4 .m1 {
-  top: 350px;
+  top: 375px;
 }
 #bracket #round2 .region2 .m2, #bracket #round2 .region4 .m2 {
-  top: 430px;
+  top: 465px;
 }
 #bracket #round2 .region2 .m3, #bracket #round2 .region4 .m3 {
-  top: 510px;
+  top: 555px;
 }
 #bracket #round2 .region2 .m4, #bracket #round2 .region4 .m4 {
-  top: 590px;
+  top: 645px;
 }
 #bracket #round3 .match {
-  height: 80px;
-  margin-top: 35px;
+  height: 110px;
+  margin-top: 33px;
 }
 #bracket #round3 .m1 {
   top: 0;
 }
 #bracket #round3 .m2 {
-  top: 160px;
+  top: 180px;
 }
 #bracket #round3 .region2 .m1, #bracket #round3 .region4 .m1 {
-  top: 350px;
+  top: 375px;
 }
 #bracket #round3 .region2 .m2, #bracket #round3 .region4 .m2 {
-  top: 510px;
+  top: 555px;
 }
 #bracket #round4 .match {
-  height: 157px;
-  margin-top: 75px;
+  height: 228px;
+  margin-top: 63px;
 }
 #bracket #round4 .m1 {
   top: 0;
 }
 #bracket #round4 .region2 .m1, #bracket #round4 .region4 .m1 {
-  top: 350px;
+  top: 368px;
 }
 #bracket #round5 .match {
   height: 65px;
@@ -241,17 +241,17 @@ table.gridtable td.title {
 #bracket #round1 h4 {
   display: block;
   position: absolute;
-  left: 250px;
-  top: 125px;
+  left: 375px;
+  top: 163px;
   width: 150px;
 }
 #bracket #round1 .region3 h4, #bracket #round1 .region4 h4 {
   left: auto;
-  right: 250px;
+  right: 375px;
   text-align: right;
 }
 #bracket #round1 .region2 h4, #bracket #round1 .region4 h4 {
-  top: 475px;
+  top: 538px;
 }
 #bracket .match .slot {
   margin: 0;
@@ -310,7 +310,7 @@ table.gridtable td.title {
 
 #bracket .key{
   position: absolute;
-  left: 1000px;
+  left: 1200px;
 }
 .Alex {
   background: #4af5af
