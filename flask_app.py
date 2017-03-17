@@ -1,4 +1,4 @@
-from flask import Flask, render_template, jsonify, abort
+from flask import Flask, render_template, jsonify
 from bs4 import BeautifulSoup
 import requests
 import json, os
@@ -48,17 +48,14 @@ def getRound(rnd):
 					playersAndTeams[t[1]] = {"team": t[0], "player": key, "seed": t[1]}
 
 		for game in rounds.get(region).get(rndStr):
-			scores, t1, t2 = None, None, None
+			t1, t2 = None, None
 			fav, spread = None, 0
 			if game:
-				if len(game) == 3:
-					scores, fav, spread = get_game_score(game[2])
-				elif len(game) == 6:
+				if len(game) == 6:
 					spread = game[4]
 					fav = game[5]
-				t1 = getit(0, scores, playersAndTeams, game)
-				t2 = getit(1, scores, playersAndTeams, game)
-
+				t1 = getit(0, playersAndTeams, game)
+				t2 = getit(1, playersAndTeams, game)
 
 			pairs.append({"teams": [t1, t2], "spread": spread, "fav": fav})
 
@@ -67,14 +64,11 @@ def getRound(rnd):
 	return jsonify(result)	
 
 
-def getit(i, scores, playersAndTeams, game):
+def getit(i, playersAndTeams, game):
 	t1 = None
 	if game[i] is not None:
-		team_name = playersAndTeams[game[i]].get("team")
 		if len(game) == 6:
 			team_score = game[i + 2]
-		elif scores is not None:
-			team_score = scores.get(team_name)
 		else:
 			team_score = 0
 		t1 = playersAndTeams[game[i]]
@@ -88,24 +82,38 @@ def index():
 	return render_template('index.html')
 
 
-@app.route("/api/getscore/<game_id>")
-def get_game_score_web(game_id):
-	return jsonify(get_game_score(game_id))
+@app.route("/api/updatescore")
+def get_game_score_web():
+	games = readFromFile("games")
+	for game in games.get("games"):
+		result, fav, spread, region, rnd = get_game_score(game)
+		setscore(rnd, region, result[0].get("seed"), result[0].get("score"), result[1].get("seed"), result[1].get("score"), fav, spread)
+
+	return 'got em'
 
 
 def get_game_score(game_id):
 	req = 'http://www.espn.com/mens-college-basketball/game?gameId=%s' % game_id
 	soup = getSoup(req)
 
-	result = {}
+	result = []
 
-	for tag in soup.find_all("td", {"class": "team-name"}):
-		scoreTag = tag.findNext('td', {"class": "final-score"})
-		if scoreTag is None or scoreTag.text is None:
-			score = 0
-		else:
-			score = int(scoreTag.text)
-		result[tag.text] = score
+	regionTag = soup.find("div", {"class":"game-details header"})
+	reg = regionTag.text.replace("MEN'S BASKETBALL CHAMPIONSHIP - ", "").replace(" ROUND", "").replace(" REGION -", "")
+	region, rnd = reg.split()
+	rnd = int(rnd[0])
+
+	teamClass = 'team away'
+	teamTag = soup.find("div", {"class": teamClass})
+	rank = teamTag.find("span", {"class": "rank"}).text
+	score = teamTag.find("div", {"class": "score"}).text
+	result.append({"seed": int(rank), "score": int(score)})
+
+	teamClass = 'team home'
+	teamTag = soup.find("div", {"class": teamClass})
+	rank = teamTag.find("span", {"class" : "rank"}).text
+	score = teamTag.find("div", {"class": "score"}).text
+	result.append({"seed": int(rank), "score": int(score)})
 
 	try:
 		lineDivTag = soup.find("div", {"class": "odds-details"})
@@ -113,7 +121,7 @@ def get_game_score(game_id):
 	except:
 		fav, line = None, None
 
-	return result, fav, line
+	return result, fav, line, region, rnd
 
 
 @app.route("/api/setscore/<int:rnd>/<region>/<int:seed1>/<int:score1>/<int:seed2>/<int:score2>/<fav>/<spread>")
