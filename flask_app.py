@@ -103,17 +103,8 @@ def get_game_score(game_id):
 	region, rnd = reg.split()
 	rnd = int(rnd[0])
 
-	teamClass = 'team away'
-	teamTag = soup.find("div", {"class": teamClass})
-	rank = teamTag.find("span", {"class": "rank"}).text
-	score = teamTag.find("div", {"class": "score"}).text
-	result.append({"seed": int(rank), "score": int(score)})
-
-	teamClass = 'team home'
-	teamTag = soup.find("div", {"class": teamClass})
-	rank = teamTag.find("span", {"class" : "rank"}).text
-	score = teamTag.find("div", {"class": "score"}).text
-	result.append({"seed": int(rank), "score": int(score)})
+	result.append(scrapeTeam(soup,'team away'))
+	result.append(scrapeTeam(soup, 'team home'))
 
 	try:
 		lineDivTag = soup.find("div", {"class": "odds-details"})
@@ -122,6 +113,16 @@ def get_game_score(game_id):
 		fav, line = None, None
 
 	return result, fav, line, region, rnd
+
+
+def scrapeTeam(soup, teamClass):
+	teamTag = soup.find("div", {"class": teamClass})
+	rank = teamTag.find("span", {"class": "rank"}).text
+	try:
+		score = int(teamTag.find("div", {"class": "score"}).text)
+	except:
+		score = 0
+	return {"seed": int(rank), "score": score}
 
 
 @app.route("/api/setscore/<int:rnd>/<region>/<int:seed1>/<int:score1>/<int:seed2>/<int:score2>/<fav>/<spread>")
