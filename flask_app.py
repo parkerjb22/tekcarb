@@ -88,6 +88,11 @@ def index():
 	return render_template('index.html')
 
 
+@app.route("/api/getscore/<game_id>")
+def get_game_score_web(game_id):
+	return jsonify(get_game_score(game_id))
+
+
 def get_game_score(game_id):
 	req = 'http://www.espn.com/mens-college-basketball/game?gameId=%s' % game_id
 	soup = getSoup(req)
