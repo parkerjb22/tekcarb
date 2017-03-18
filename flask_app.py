@@ -1,7 +1,8 @@
 from flask import Flask, render_template, jsonify
 from bs4 import BeautifulSoup
+from datetime import datetime, timedelta
 import requests
-import json, os, threading, time
+import json, os
 
 app = Flask(__name__)
 
@@ -111,16 +112,30 @@ def remove_game(gameId):
 	return jsonify(games)
 
 
+def game_started(game_time):
+	now = datetime.utcnow()
+	date = game_time["date"]
+	start_time = game_time["starttime"]
+	g_str = '%s 2017  %sM' % (date, start_time)
+	g_time = datetime.strptime(g_str, '%b %d %Y %I:%M%p')
+	g_utc = g_time + timedelta(hours=5)
+
+	return now > g_utc
+
+
 @app.route("/api/updatescore/v2")
 def get_game_score_web():
 	games = readFromFile("games")
-	for game in games.get("games"):
-		result, fav, spread, region, rnd, timeLeft = get_game_score(game)
-		setscore(rnd, region, result[0].get("seed"), result[0].get("score"), result[1].get("seed"), result[1].get("score"), fav, spread, timeLeft)
-		if timeLeft == 'Final':
-			remove_game(game)
+	updating_games = []
+	for game_id, game in games.get("games").items():
+		if game_started(game):
+			updating_games.append(game_id)
+			result, fav, spread, region, rnd, timeLeft = get_game_score(game_id)
+			setscore(rnd, region, result[0].get("seed"), result[0].get("score"), result[1].get("seed"), result[1].get("score"), fav, spread, timeLeft)
+			if timeLeft == 'Final':
+				remove_game(game_id)
 
-	return 'got em\n'
+	return jsonify(updating_games)
 
 
 def get_game_score(game_id):
@@ -305,10 +320,10 @@ def getTeamBySeed(region, seed):
 
 
 def getSoup(url):
-    html = requests.get(url)
-    text = html.text
-    soup = BeautifulSoup(text, "html.parser")
-    return soup
+	html = requests.get(url)
+	text = html.text
+	soup = BeautifulSoup(text, "html.parser")
+	return soup
 
 if __name__ == '__main__':
 	app.run(host='0.0.0.0', port=5050)
