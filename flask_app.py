@@ -120,7 +120,7 @@ def add_game(gameId):
 def remove_game(gameId):
 	games = readFromFile("games")
 	if gameId in games["games"]:
-		games["games"].remove(gameId)
+		del games["games"][gameId]
 	writeToFile("games", games)
 
 	return jsonify(games)
@@ -143,12 +143,12 @@ def get_game_score_web():
 	updating_games = []
 	for game_id, game in games.get("games").items():
 		if game_started(game):
-			updating_games.append(game_id)
 			result, fav, spread, region, rnd, timeLeft = get_game_score(game_id)
 			setscore(rnd, region, result[0].get("seed"), result[0].get("score"), result[1].get("seed"), result[1].get("score"), fav, spread, timeLeft)
 			if timeLeft == 'Final':
 				remove_game(game_id)
-
+			else:
+				updating_games.append(game_id)
 	return jsonify(updating_games)
 
 
@@ -225,6 +225,13 @@ def setgameid(rnd, region, seed, game_id):
 
 	writeToFile('rounds', rounds)
 	return 'set em'
+
+
+@app.route("/api/current_round")
+def get_current_round():
+	games = readFromFile("games")
+	return games.get("current_round")
+
 
 @app.route("/api/update/<player_name>/<int:rnd>/<region>/<int:seed>")
 def updateTables(player_name, rnd, region, seed):
