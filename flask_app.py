@@ -58,15 +58,16 @@ def getRound(rnd):
 		else:
 			for game in rounds.get(region).get(rndStr):
 				t1, t2 = None, None
-				fav, spread = None, 0
+				fav, spread, time_left = None, 0, None
 				if game:
-					if len(game) == 6:
+					if len(game) >=6:
 						fav = game[4]
 						spread = game[5]
+						time_left = game[6] if len(game) == 7 else 'Final'
 					t1 = getit(0, playersAndTeams, game)
 					t2 = getit(1, playersAndTeams, game)
 
-				pairs.append({"teams": [t1, t2], "spread": spread, "fav": fav})
+				pairs.append({"teams": [t1, t2], "spread": spread, "fav": fav, "timeLeft": time_left})
 
 			result[region] = pairs
 
@@ -76,7 +77,7 @@ def getRound(rnd):
 def getit(i, playersAndTeams, game):
 	t1 = None
 	if game[i] is not None:
-		if len(game) == 6:
+		if len(game) >= 6:
 			team_score = game[i + 2]
 		else:
 			team_score = 0
@@ -114,8 +115,8 @@ def remove_game(gameId):
 def get_game_score_web():
 	games = readFromFile("games")
 	for game in games.get("games"):
-		result, fav, spread, region, rnd = get_game_score(game)
-		setscore(rnd, region, result[0].get("seed"), result[0].get("score"), result[1].get("seed"), result[1].get("score"), fav, spread)
+		result, fav, spread, region, rnd, timeLeft = get_game_score(game)
+		setscore(rnd, region, result[0].get("seed"), result[0].get("score"), result[1].get("seed"), result[1].get("score"), fav, spread, timeLeft)
 
 	return 'got em\n'
 
@@ -135,12 +136,18 @@ def get_game_score(game_id):
 	result.append(scrapeTeam(soup, 'team home'))
 
 	try:
+		timeTag = soup.find("span", {"class": "game-time"})
+		timeLeft = timeTag.text.replace(" - ", " ").replace(" Half", "")
+	except:
+		timeLeft = "0:00"
+
+	try:
 		lineDivTag = soup.find("div", {"class": "odds-details"})
 		fav, line = lineDivTag.findNext("li").text.replace("Line: ", "").split()
 	except:
 		fav, line = None, None
 
-	return result, fav, line, region, rnd
+	return result, fav, line, region, rnd, timeLeft
 
 
 def scrapeTeam(soup, teamClass):
@@ -154,11 +161,11 @@ def scrapeTeam(soup, teamClass):
 
 
 @app.route("/api/setscore/<int:rnd>/<region>/<int:seed1>/<int:score1>/<int:seed2>/<int:score2>/<fav>/<spread>")
-def setscore(rnd, region, seed1, score1, seed2, score2, fav, spread):
+def setscore(rnd, region, seed1, score1, seed2, score2, fav, spread, timeLeft):
 	round_str = "round%s" % rnd
 	rounds = readFromFile('rounds')
 	matchup, slot = getMatchupAndSlot(rnd, seed1)
-	while len(rounds[region][round_str][matchup]) < 6:
+	while len(rounds[region][round_str][matchup]) < 7:
 		rounds[region][round_str][matchup].append(None)
 
 	rounds[region][round_str][matchup][slot+2] = score1
@@ -166,6 +173,7 @@ def setscore(rnd, region, seed1, score1, seed2, score2, fav, spread):
 	rounds[region][round_str][matchup][slot+2] = score2
 	rounds[region][round_str][matchup][4] = fav
 	rounds[region][round_str][matchup][5] = spread
+	rounds[region][round_str][matchup][6] = timeLeft
 
 	writeToFile('rounds', rounds)
 	return 'set em'

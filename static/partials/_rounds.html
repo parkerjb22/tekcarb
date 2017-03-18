@@ -13,7 +13,8 @@
         <strong>
           <span class="seed">{{ team.seed }}</span>
           {{ team.team }}
-          <span ng-show="matchup.fav === team.team">{{ matchup.spread }}</span>
+          <span ng-show="matchup.fav === team.team" style="font-size: 9px">{{ matchup.spread }}</span>
+          <span ng-hide="matchup.fav === team.team" style="font-size: 9px">{{ matchup.timeLeft }}</span>
           <em class="score">{{ team.score}}</em>
         </strong>
       </p>
