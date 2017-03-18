@@ -79,7 +79,7 @@ def get_time_left(game):
 	quarter, q_sup = None, None
 	if len(game) == 7:
 		entire_string = game[6]
-		if entire_string in ['Final', 'Half']:
+		if entire_string in ['Final', 'Half', '0:00']:
 			time_left = entire_string
 		else:
 			time_left, quarter = entire_string.split()
@@ -171,6 +171,8 @@ def get_game_score(game_id):
 		timeLeft = timeTag.text
 		if timeLeft == 'Halftime':
 			timeLeft = 'Half'
+		elif timeLeft == '':
+			timeLeft = "0:00"
 		else:
 			timeLeft = timeTag.text.replace(" - ", " ").replace(" Half", "")
 	except:
