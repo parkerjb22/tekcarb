@@ -110,14 +110,14 @@ def remove_game(gameId):
 	return jsonify(games)
 
 
-@app.route("/api/updatescore")
+@app.route("/api/updatescore/v2")
 def get_game_score_web():
 	games = readFromFile("games")
 	for game in games.get("games"):
 		result, fav, spread, region, rnd = get_game_score(game)
 		setscore(rnd, region, result[0].get("seed"), result[0].get("score"), result[1].get("seed"), result[1].get("score"), fav, spread)
 
-	return 'got em'
+	return 'got em\n'
 
 
 def get_game_score(game_id):
@@ -299,21 +299,6 @@ def getSoup(url):
     text = html.text
     soup = BeautifulSoup(text, "html.parser")
     return soup
-
-
-def update_loop():
-	while True:
-		time.sleep(10)
-		get_game_score_web()
-
-@app.route("/api/start")
-def startThread():
-    t = threading.Thread(target=update_loop)
-    t.daemon = True
-    t.start()
-
-    return 'started'
-
 
 if __name__ == '__main__':
 	app.run(host='0.0.0.0', port=5050)
