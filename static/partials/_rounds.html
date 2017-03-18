@@ -1,4 +1,4 @@
-<div data-ng-repeat="i in [1,2,3,4,5]" id="round{{ i }}" class="round">
+<div data-ng-repeat="i in [1,2,3,4]" id="round{{ i }}" class="round">
   <h3>
     Round One (2017 NCAA Men's Basketball Tournament) 
   </h3>
@@ -13,9 +13,11 @@
         <strong>
           <span class="seed">{{ team.seed }}</span>
           {{ team.team }}
-          <span ng-show="matchup.fav === team.team" style="font-size: 9px">{{ matchup.spread }}</span>
-          <span ng-hide="matchup.fav === team.team" style="font-size: 9px">{{ matchup.timeLeft }}</span>
-          <em class="score">{{ team.score}}</em>
+          <em class="score" style="width: 30px">
+            {{ team.score}}
+          </em>
+          <span class="score" ng-show="matchup.fav === team.team" style="font-size: 9px;height: 18px;width: 51px;padding-top: 2px">{{ matchup.spread }}</span>
+          <span class="score" ng-hide="!matchup.fav || matchup.fav === team.team" style="font-size: 9px;height: 18px;width: 51px;padding-top: 2px">{{ matchup.timeLeft }}</span>
         </strong>
       </p>
     </div>

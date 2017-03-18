@@ -277,9 +277,10 @@ table.gridtable td.title {
   display: inline;
   float: right;
   border-left: 1px solid #AAA;
-  padding-left: 10px;
-  padding-right: 10px;
+  padding-left: 2px;
+  padding-right: 2px;
   background: #EEE;
+  text-align: -webkit-right;
 }
 #bracket .match .seed {
   font-size: 10px;
