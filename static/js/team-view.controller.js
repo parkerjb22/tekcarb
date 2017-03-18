@@ -25,7 +25,7 @@
             $interval(function() {
                 getRound(1)
                 getRound(2)
-            }, 9000);
+            }, 1000);
         }
 
         vm.updatescores = (function(){
