@@ -117,6 +117,8 @@ def get_game_score_web():
 	for game in games.get("games"):
 		result, fav, spread, region, rnd, timeLeft = get_game_score(game)
 		setscore(rnd, region, result[0].get("seed"), result[0].get("score"), result[1].get("seed"), result[1].get("score"), fav, spread, timeLeft)
+		if timeLeft == 'Final':
+			remove_game(game)
 
 	return 'got em\n'
 

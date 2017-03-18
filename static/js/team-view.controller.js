@@ -23,8 +23,8 @@
             vm.selectedTeam = ''
 
             $interval(function() {
-                getRound(1)
                 getRound(2)
+                getRound(3)
             }, 1000);
         }
 
