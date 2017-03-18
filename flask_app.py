@@ -306,10 +306,15 @@ def update_loop():
 		time.sleep(10)
 		get_game_score_web()
 
+@app.route("/api/start")
+def startThread():
+    t = threading.Thread(target=update_loop)
+    t.daemon = True
+    t.start()
+
+    return 'started'
+
 
 if __name__ == '__main__':
-	t = threading.Thread(target=update_loop)
-	t.daemon = True
-	t.start()
 	app.run(host='0.0.0.0', port=5050)
 
