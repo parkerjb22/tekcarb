@@ -47,19 +47,28 @@ def getRound(rnd):
 					t = teamList.get(teamId)
 					playersAndTeams[t[1]] = {"team": t[0], "player": key, "seed": t[1]}
 
-		for game in rounds.get(region).get(rndStr):
-			t1, t2 = None, None
-			fav, spread = None, 0
-			if game:
-				if len(game) == 6:
-					fav = game[4]
-					spread = game[5]
-				t1 = getit(0, playersAndTeams, game)
-				t2 = getit(1, playersAndTeams, game)
+		if (rnd == 5):
+			pass
+			# "round5": [
+			# 	[1, 1, 55, 34, "KU", "-55"],
+			# 	[1, 1, 55, 34, "UNC", "-55"]
+			# ]
 
-			pairs.append({"teams": [t1, t2], "spread": spread, "fav": fav})
 
-		result[region] = pairs
+		else:
+			for game in rounds.get(region).get(rndStr):
+				t1, t2 = None, None
+				fav, spread = None, 0
+				if game:
+					if len(game) == 6:
+						fav = game[4]
+						spread = game[5]
+					t1 = getit(0, playersAndTeams, game)
+					t2 = getit(1, playersAndTeams, game)
+
+				pairs.append({"teams": [t1, t2], "spread": spread, "fav": fav})
+
+			result[region] = pairs
 
 	return jsonify(result)	
 
@@ -80,6 +89,25 @@ def getit(i, playersAndTeams, game):
 @app.route("/")
 def index():
 	return render_template('index.html')
+
+
+@app.route("/api/addgame/<gameId>")
+def add_game(gameId):
+	games = readFromFile("games")
+	if gameId not in games["games"]:
+		games["games"].append(gameId)
+	writeToFile("games", games)
+
+	return jsonify(games)
+
+@app.route("/api/removegame/<gameId>")
+def remove_game(gameId):
+	games = readFromFile("games")
+	if gameId in games["games"]:
+		games["games"].remove(gameId)
+	writeToFile("games", games)
+
+	return jsonify(games)
 
 
 @app.route("/api/updatescore")
