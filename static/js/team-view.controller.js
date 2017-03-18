@@ -4,9 +4,9 @@
     
     myApp.controller("TeamViewCtrl", TeamViewCtrl)
 
-    TeamViewCtrl.$inject = ['$routeParams', 'TeamService']
+    TeamViewCtrl.$inject = ['$routeParams', '$interval', 'TeamService']
 
-    function TeamViewCtrl($routeParams, TeamService) {
+    function TeamViewCtrl($routeParams, $interval, TeamService) {
         var vm = this
         // var player = $routeParams.id
         activate();
@@ -21,7 +21,11 @@
             })
 
             vm.selectedTeam = ''
-            vm.buttonText = 'Update Scores'
+
+            $interval(function() {
+                getRound(1)
+                getRound(2)
+            }, 1000);
         }
 
         vm.updatescores = (function(){
@@ -33,17 +37,14 @@
         })
 
         function getTeams(){
-            TeamService.getTeams(1).then(function(teams) {
-                vm.rounds[1] = vm.orderTeams(teams)
-            })
-            TeamService.getTeams(2).then(function(teams) {
-                vm.rounds[2] = vm.orderTeams(teams)
-            })
-            TeamService.getTeams(3).then(function(teams) {
-                vm.rounds[3] = vm.orderTeams(teams)
-            })
-            TeamService.getTeams(4).then(function(teams) {
-                vm.rounds[4] = vm.orderTeams(teams)
+            for (var i=1; i<=4; i++) {
+                getRound(i)
+            }
+        }
+
+        function getRound(round_num){
+            TeamService.getTeams(round_num).then(function(teams) {
+                vm.rounds[round_num] = vm.orderTeams(teams)
             })
         }
 

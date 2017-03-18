@@ -1,7 +1,7 @@
 from flask import Flask, render_template, jsonify
 from bs4 import BeautifulSoup
 import requests
-import json, os
+import json, os, threading, time
 
 app = Flask(__name__)
 
@@ -293,12 +293,23 @@ def getTeamBySeed(region, seed):
 
 	return int(team_id), team
 
+
 def getSoup(url):
     html = requests.get(url)
     text = html.text
     soup = BeautifulSoup(text, "html.parser")
     return soup
 
+
+def update_loop():
+	while True:
+		time.sleep(10)
+		get_game_score_web()
+
+
 if __name__ == '__main__':
+	t = threading.Thread(target=update_loop)
+	t.daemon = True
+	t.start()
 	app.run(host='0.0.0.0', port=5050)
 
