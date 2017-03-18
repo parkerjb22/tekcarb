@@ -48,13 +48,12 @@ def getRound(rnd):
 					t = teamList.get(teamId)
 					playersAndTeams[t[1]] = {"team": t[0], "player": key, "seed": t[1]}
 
-		if (rnd == 5):
+		if rnd == 5:
 			pass
 			# "round5": [
 			# 	[1, 1, 55, 34, "KU", "-55"],
 			# 	[1, 1, 55, 34, "UNC", "-55"]
 			# ]
-
 
 		else:
 			for game in rounds.get(region).get(rndStr):
@@ -64,7 +63,7 @@ def getRound(rnd):
 					if len(game) >=6:
 						fav = game[4]
 						spread = game[5]
-						time_left = game[6] if len(game) == 7 else 'Final'
+						time_left = get_time_left(game)
 					t1 = getit(0, playersAndTeams, game)
 					t2 = getit(1, playersAndTeams, game)
 
@@ -73,6 +72,21 @@ def getRound(rnd):
 			result[region] = pairs
 
 	return jsonify(result)	
+
+
+def get_time_left(game):
+	time_left = 'Final'
+	quarter, q_sup = None, None
+	if len(game) == 7:
+		entire_string = game[6]
+		if entire_string in ['Final', 'Half']:
+			time_left = entire_string
+		else:
+			time_left, quarter = entire_string.split()
+			q_sup = quarter[1:]
+			quarter = quarter[0]
+
+	return {"time": time_left, "quarter": quarter, "sup": q_sup}
 
 
 def getit(i, playersAndTeams, game):
@@ -154,7 +168,11 @@ def get_game_score(game_id):
 
 	try:
 		timeTag = soup.find("span", {"class": "game-time"})
-		timeLeft = timeTag.text.replace(" - ", " ").replace(" Half", "")
+		timeLeft = timeTag.text
+		if timeLeft == 'Halftime':
+			timeLeft = 'Half'
+		else:
+			timeLeft = timeTag.text.replace(" - ", " ").replace(" Half", "")
 	except:
 		timeLeft = "0:00"
 

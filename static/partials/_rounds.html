@@ -17,7 +17,10 @@
             {{ team.score}}
           </em>
           <span class="score" ng-show="matchup.fav === team.team" style="font-size: 9px;height: 18px;width: 51px;padding-top: 2px">{{ matchup.spread }}</span>
-          <span class="score" ng-hide="!matchup.fav || matchup.fav === team.team" style="font-size: 9px;height: 18px;width: 51px;padding-top: 2px">{{ matchup.timeLeft }}</span>
+          <span class="score" ng-hide="!matchup.fav || matchup.fav === team.team" style="font-size: 9px;height: 18px;width: 51px;padding-top: 2px">
+            {{ matchup.timeLeft.time }}
+            <span ng-show="matchup.timeLeft.quarter">{{matchup.timeLeft.quarter}}<sup>{{matchup.timeLeft.sup}}</sup></span>
+          </span>
         </strong>
       </p>
     </div>
