@@ -1,6 +1,7 @@
 from flask import Flask, render_template, jsonify
 from bs4 import BeautifulSoup
 from datetime import datetime, timedelta
+from collections import OrderedDict
 import requests
 import json, os
 
@@ -232,7 +233,27 @@ def setgameid(rnd, region, seed, game_id):
 @app.route("/api/current_round")
 def get_current_round():
 	games = readFromFile("games")
-	return games.get("current_round")
+	rounds = games.get("rounds")
+	rounds = OrderedDict(sorted(rounds.items()))
+	result = find_current_round(rounds)
+	return jsonify(result)
+
+
+def find_current_round(rounds):
+	now = (datetime.utcnow() - timedelta(hours=5)).date()
+	result = []
+	r_rnd = 1
+
+	for rnd, date in rounds.items():
+		r_str = '%s 2017' % date
+		r_date = datetime.strptime(r_str, '%b %d %Y').date()
+		if now < r_date:
+			break
+		else:
+			r_rnd = int(rnd)
+
+	result.append(r_rnd)
+	return result
 
 
 @app.route("/api/update/<player_name>/<int:rnd>/<region>/<int:seed>")

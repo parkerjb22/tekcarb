@@ -16,16 +16,20 @@
 
             getTeams()
 
+            TeamService.getCurrentRound().then(function(rnd) {
+                vm.rnd = parseInt(rnd, 10);
+
+                $interval(function() {
+                    getRound(vm.rnd)
+                    getRound(vm.rnd + 1)
+                }, 1000);
+            })
+
             TeamService.getPlayers().then(function(players) {
                 vm.players = players
             })
 
             vm.selectedTeam = ''
-
-            $interval(function() {
-                getRound(2)
-                getRound(3)
-            }, 1000);
         }
 
         vm.updatescores = (function(){
