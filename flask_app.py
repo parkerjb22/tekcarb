@@ -3,7 +3,7 @@ from bs4 import BeautifulSoup
 from datetime import datetime, timedelta
 from collections import OrderedDict
 import requests
-import json, os
+import json, os, math
 
 app = Flask(__name__)
 
@@ -39,15 +39,9 @@ def getRound(rnd):
 	players = readFromFile('players')
 	result = {}
 	for region, teamList in teams.items():
-		teamList = {int(k): v for k, v in teamList.items()}
+		playersAndTeams = get_players_and_teams(players, rndStr, teamList)
+
 		pairs = []
-		playersAndTeams = {}
-		for key, v in players.items():
-			value = v.get(rndStr)
-			for teamId in value:
-				if teamList.get(teamId) is not None:
-					t = teamList.get(teamId)
-					playersAndTeams[t[1]] = {"team": t[0], "player": key, "seed": t[1]}
 
 		if rnd == 5:
 			pass
@@ -56,24 +50,84 @@ def getRound(rnd):
 			# 	[1, 1, 55, 34, "UNC", "-55"]
 			# ]
 
-		else:
+		else: 
 			for game in rounds.get(region).get(rndStr):
-				t1, t2 = None, None
-				fav, spread, time_left = None, 0, None
-				if game:
-					if len(game) >=6:
-						fav = game[4]
-						spread = game[5]
-						time_left = get_time_left(game)
-					t1 = getit(0, playersAndTeams, game)
-					t2 = getit(1, playersAndTeams, game)
-
-				pairs.append({"teams": [t1, t2], "spread": spread, "fav": fav, "timeLeft": time_left})
+				pairs.append(get_pair(game, playersAndTeams))
 
 			result[region] = pairs
 
 	return jsonify(result)	
 
+def get_pair(game, playersAndTeams):
+	t1, t2 = None, None
+	fav, spread, time_left = None, 0, None
+	if game:
+		if len(game) >=6:
+			fav = game[4]
+			spread = game[5]
+			time_left = get_time_left(game)
+		t1 = getit(0, playersAndTeams, game)
+		t2 = getit(1, playersAndTeams, game)
+
+	return {"teams": [t1, t2], "spread": spread, "fav": fav, "timeLeft": time_left}
+
+def get_players_and_teams(players, rndStr, teamList):
+	teamList = {int(k): v for k, v in teamList.items()}
+	playersAndTeams = {}
+	for key, v in players.items():
+		value = v.get(rndStr)
+		for teamId in value:
+			if teamList.get(teamId) is not None:
+				t = teamList.get(teamId)
+				playersAndTeams[t[1]] = {"team": t[0], "player": key, "seed": t[1]}
+
+	return playersAndTeams
+
+
+def set_winner(rnd, region, result, fav, spread):
+	# I have the seed, rnd and region of the teams, that should give me the players
+	rndStr = "round%s" % rnd
+	teams = readFromFile('teams')
+	players = readFromFile('players')
+	rounds = readFromFile('rounds')
+
+	# this will get each player and seed for this round
+	teamList = teams.get(region)
+	playersAndTeams = get_players_and_teams(players, rndStr, teamList)
+
+	# find the game
+	seed1 = result[0].get("seed")
+	seed2 = result[1].get("seed")
+	found_game = None
+	for game in rounds.get(region).get(rndStr):
+		if game[0] in (seed1, seed2) and game[1] in (seed1, seed2):
+			found_game = game
+			break
+
+	if found_game is not None:
+		fav = found_game[4]
+		spread = math.floor(float(found_game[5]))
+		spread = int(spread)
+
+		if found_game[2] >= found_game[3]:
+			seed_winner = found_game[0]
+		else:
+			seed_winner = found_game[1]
+
+		if playersAndTeams[found_game[0]].get("team") == fav:
+			if found_game[2] + spread >= found_game[3]:
+				winner = playersAndTeams[found_game[0]].get("player")
+			else:
+				winner = playersAndTeams[found_game[1]].get("player")
+		else:
+			if found_game[3] + spread >= found_game[2]:
+				winner = playersAndTeams[found_game[1]].get("player")
+			else:
+				winner = playersAndTeams[found_game[0]].get("player")
+
+	updateTables(winner, rnd+1, region, seed_winner)
+
+	return {"winner": winner, "round": rnd + 1, "region": region, "seed": seed_winner}
 
 def get_time_left(game):
 	time_left = 'Final'
@@ -148,10 +202,19 @@ def get_game_score_web():
 			setscore(rnd, region, result[0].get("seed"), result[0].get("score"), result[1].get("seed"), result[1].get("score"), fav, spread, timeLeft)
 			if timeLeft == 'Final':
 				remove_game(game_id)
+				set_winner(rnd, region, result, fav, spread)
 			else:
 				updating_games.append(game_id)
 	return jsonify(updating_games)
 
+
+@app.route("/api/game/<game_id>")
+def get_single_game(game_id):
+	result, fav, spread, region, rnd, timeLeft = get_game_score(game_id)
+	setscore(rnd, region, result[0].get("seed"), result[0].get("score"), result[1].get("seed"), result[1].get("score"), fav, spread, timeLeft)
+	winner = set_winner(rnd, region, result, fav, spread)
+
+	return jsonify(winner)
 
 def get_game_score(game_id):
 	req = 'http://www.espn.com/mens-college-basketball/game?gameId=%s' % game_id
