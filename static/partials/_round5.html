@@ -1,16 +1,24 @@
-    <div id="round5" class="round">
-      <div class="region">
-        <div id="match63" class="match m1">
-          <p class="slot slot1">
-          </p>
-          <p class="slot slot2">
-          </p>
-        </div>
-        <div id="match62" class="match m2">
-          <p class="slot slot1">
-          </p>
-          <p class="slot slot2">
-          </p>
-        </div>
-      </div>
+<div data-ng-repeat="i in [5,6]" id="round{{ i }}" class="round">
+  <div class="region">
+
+    <div ng-repeat="matchup in vm.rounds[i] track by $index" id="match{{ $index }}" class="match m{{ $index + 1 }}">
+      <p ng-repeat="team in matchup.teams track by $index" 
+        class="slot slot{{ $index + 1 }} {{ (vm.selectedTeam === team.player || vm.selectedTeam === '') ? team.player : '' }}">
+        <strong>
+          <span class="seed">{{ team.seed }}</span>
+          {{ team.team }}
+          <em class="score" style="width: 30px">
+            {{ team.score}}
+          </em>
+          <span class="score" ng-show="matchup.fav === team.team" style="font-size: 9px;height: 18px;width: 51px;padding-top: 2px">{{ matchup.spread }}</span>
+          <span class="score" ng-hide="!matchup.fav || matchup.fav === team.team" style="font-size: 9px;height: 18px;width: 51px;padding-top: 2px">
+            {{ matchup.timeLeft.time }}
+            <span ng-show="matchup.timeLeft.quarter">{{matchup.timeLeft.quarter}}<sup>{{matchup.timeLeft.sup}}</sup></span>
+          </span>
+        </strong>
+      </p>
     </div>
+
+  </div>
+
+</div>

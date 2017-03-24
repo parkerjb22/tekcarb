@@ -9,7 +9,8 @@
     function TeamService($resource) {
 
 	    var teamResource = $resource('api/rnd/:round', {round: "@round"}, {
-			get: { method: 'GET', params: {}, isArray: false }
+			get: { method: 'GET', params: {}, isArray: false },
+            query: { method: 'GET', params: {}, isArray: true }
 	    })
 
         var playerResource = $resource('api/players', {id: "@id"}, {
@@ -26,6 +27,7 @@
 
         return {
             getTeams: getTeams,
+            getLateRoundTeams : getLateRoundTeams,
             getPlayers: getPlayers,
             updatescores: updatescores,
             getCurrentRound : getCurrentRound,
@@ -33,6 +35,10 @@
 
         function getTeams(round) {
             return teamResource.get({round: round}).$promise
+        }
+
+        function getLateRoundTeams(round) {
+            return teamResource.query({round: round}).$promise
         }
 
         function getPlayers() {

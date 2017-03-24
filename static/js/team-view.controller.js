@@ -41,15 +41,21 @@
         })
 
         function getTeams(){
-            for (var i=1; i<=4; i++) {
+            for (var i=1; i<=6; i++) {
                 getRound(i)
             }
         }
 
         function getRound(round_num){
-            TeamService.getTeams(round_num).then(function(teams) {
-                vm.rounds[round_num] = vm.orderTeams(teams)
-            })
+            if (round_num >= 5){
+                TeamService.getLateRoundTeams(round_num).then(function(teams) {
+                    vm.rounds[round_num] = teams
+                })
+            } else {
+                TeamService.getTeams(round_num).then(function(teams) {
+                    vm.rounds[round_num] = vm.orderTeams(teams)
+                })
+            }
         }
 
         vm.orderTeams = (function(teams){

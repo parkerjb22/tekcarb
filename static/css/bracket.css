@@ -70,12 +70,12 @@ table.gridtable td.title {
   width: 300px;
 }
 #bracket #round5 {
-  left: 280px;
-  width: 380px;
+  left: 343px;
+  width: 455px;
 }
 #bracket #round6 {
-  left: 395px;
-  width: 150px;
+  left: 500px;
+  width: 140px;
 }
 #bracket .round .region1 .match, #bracket .round .region2 .match {
   left: 0px;
@@ -197,8 +197,8 @@ table.gridtable td.title {
   top: 368px;
 }
 #bracket #round5 .match {
-  height: 65px;
-  top: 300px;
+  height: 40px;
+  top: 345px;
 }
 #bracket #round5 .m1 {
   left: 0;
@@ -209,32 +209,29 @@ table.gridtable td.title {
   border-right: none;
 }
 #bracket #round6 .match {
-  height: 65px;
-  top: 285px;
-  border: none;
-  width: 150px;
-  padding: 0;
+  height: 40px;
+  top: 345px;
 }
-#bracket #round6 .slot {
+/*#bracket #round6 .slot {
   font-size: 13px;
   height: 25px;
   line-height: 25px;
   padding: 0 10px 0 6px;
-}
+}*/
 #bracket #round6 .selected {
   font-size: 16px;
   background: #D7E8F0;
 }
-#bracket #round6 .slot1 {
+/*#bracket #round6 .slot1 {
   border-bottom: 1px solid #666;
   top: 22px;
 }
 #bracket #round6 .slot2 {
   top: 48px;
-}
-#bracket #round6 strong, #bracket #round6 strong span.seed, #bracket #round6 strong span.score {
+}*/
+/*#bracket #round6 strong, #bracket #round6 strong span.seed, #bracket #round6 strong span.score {
   color: #c52000;
-}
+}*/
 #bracket h3, #bracket h4 {
   display: none;
 }

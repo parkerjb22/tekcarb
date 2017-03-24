@@ -32,33 +32,60 @@ def getPlayers():
 
 
 @app.route("/api/rnd/<int:rnd>")
-def getRound(rnd):
-	rndStr = "round%s" % rnd
+def get_round(rnd):
+
+	if rnd >= 5:
+		return get_later_round(rnd)
+
+	rnd_str = "round%s" % rnd
 	teams = readFromFile('teams')
 	rounds = readFromFile('rounds')
 	players = readFromFile('players')
+
 	result = {}
-	for region, teamList in teams.items():
-		playersAndTeams = get_players_and_teams(players, rndStr, teamList)
+	for region, team_list in teams.items():
+		players_and_teams = get_players_and_teams(players, rnd_str, team_list)
 
 		pairs = []
 
-		if rnd == 5:
-			pass
-			# "round5": [
-			# 	[1, 1, 55, 34, "KU", "-55"],
-			# 	[1, 1, 55, 34, "UNC", "-55"]
-			# ]
+		for game in rounds.get(region).get(rnd_str):
+			pairs.append(get_pair(game, players_and_teams))
 
-		else: 
-			for game in rounds.get(region).get(rndStr):
-				pairs.append(get_pair(game, playersAndTeams))
-
-			result[region] = pairs
+		result[region] = pairs
 
 	return jsonify(result)	
 
-def get_pair(game, playersAndTeams):
+
+def get_later_round(rnd):
+	rnd_str = "round%s" % rnd
+	teams = readFromFile('teams')
+	rounds = readFromFile('rounds')
+	players = readFromFile('players')
+
+	players_and_teams = {}
+	for region, team_list in teams.items():
+		players_and_teams = get_players_and_teams_by_team_id(players, rnd_str, team_list, players_and_teams)
+
+	pairs = []
+
+	for game in rounds.get(rnd_str):
+		pairs.append(get_pair(game, players_and_teams))
+
+	return jsonify(pairs)
+
+
+def get_players_and_teams_by_team_id(players, rnd_str, team_list, players_and_teams):
+	team_list = {int(k): v for k, v in team_list.items()}
+	for key, v in players.items():
+		value = v.get(rnd_str)
+		for teamId in value:
+			if team_list.get(teamId) is not None:
+				t = team_list.get(teamId)
+				players_and_teams[teamId] = {"team": t[0], "player": key, "seed": t[1], "team_id": teamId}
+	return players_and_teams
+
+
+def get_pair(game, players_and_teams):
 	t1, t2 = None, None
 	fav, spread, time_left = None, 0, None
 	if game:
@@ -68,22 +95,23 @@ def get_pair(game, playersAndTeams):
 			if spread == '0':
 				spread = 'EVEN'
 			time_left = get_time_left(game)
-		t1 = getit(0, playersAndTeams, game)
-		t2 = getit(1, playersAndTeams, game)
+		t1 = getit(0, players_and_teams, game)
+		t2 = getit(1, players_and_teams, game)
 
 	return {"teams": [t1, t2], "spread": spread, "fav": fav, "timeLeft": time_left}
 
-def get_players_and_teams(players, rndStr, teamList):
-	teamList = {int(k): v for k, v in teamList.items()}
-	playersAndTeams = {}
-	for key, v in players.items():
-		value = v.get(rndStr)
-		for teamId in value:
-			if teamList.get(teamId) is not None:
-				t = teamList.get(teamId)
-				playersAndTeams[t[1]] = {"team": t[0], "player": key, "seed": t[1]}
 
-	return playersAndTeams
+def get_players_and_teams(players, rnd_str, team_list):
+	team_list = {int(k): v for k, v in team_list.items()}
+	players_and_teams = {}
+	for key, v in players.items():
+		value = v.get(rnd_str)
+		for teamId in value:
+			if team_list.get(teamId) is not None:
+				t = team_list.get(teamId)
+				players_and_teams[t[1]] = {"team": t[0], "player": key, "seed": t[1], "team_id": teamId}
+
+	return players_and_teams
 
 
 def set_winner(rnd, region, result, fav, spread):
@@ -228,8 +256,20 @@ def get_game_score(game_id):
 	regionTag = soup.find("div", {"class":"game-details header"})
 	# "MEN'S BASKETBALL CHAMPIONSHIP - WEST REGION - 2ND ROUND"
 	# "MEN'S BASKETBALL CHAMPIONSHIP - WEST REGION - SWEET 16"
+	# "MEN'S BASKETBALL CHAMPIONSHIP - WEST REGION - ELITE 8"
+	# "MEN'S BASKETBALL CHAMPIONSHIP - WEST REGION - FINAL FOUR"
+	# "MEN'S BASKETBALL CHAMPIONSHIP - NATIONAL CHAMPIONSHIP"
 	reg = regionTag.text.replace("MEN'S BASKETBALL CHAMPIONSHIP - ", "")
-	if "SWEET" in reg:
+	if "NATIONAL" in reg:
+		region = None
+		rnd = 6
+	elif "FINAL" in reg:
+		region = None
+		rnd = 5
+	elif "ELITE" in reg:
+		region = reg.replace(" REGION - ELITE 8", "")
+		rnd = 4
+	elif "SWEET" in reg:
 		region = reg.replace(" REGION - SWEET 16", "")
 		rnd = 3
 	else:
@@ -256,7 +296,7 @@ def get_game_score(game_id):
 		lineDivTag = soup.find("div", {"class": "odds-details"})
 		line_text = lineDivTag.findNext("li").text
 		if 'EVEN' in line_text:
-			fav = get_home_team_name(soup)
+			fav = result[0].get("abbrev")
 			line = "0"
 		else:
 			fav, line = lineDivTag.findNext("li").text.replace("Line: ", "").split()
@@ -266,20 +306,15 @@ def get_game_score(game_id):
 	return result, fav, line, region, rnd, timeLeft
 
 
-def get_home_team_name(soup):
-	teamTag = soup.find("div", {"class": 'team home'})
-	abbrev = teamTag.find("span", {"class": "abbrev"}).text
-	return abbrev
-
-
 def scrapeTeam(soup, teamClass):
 	teamTag = soup.find("div", {"class": teamClass})
 	rank = teamTag.find("span", {"class": "rank"}).text
+	abbrev = teamTag.find("span", {"class": "abbrev"}).text
 	try:
 		score = int(teamTag.find("div", {"class": "score"}).text)
 	except:
 		score = 0
-	return {"seed": int(rank), "score": score}
+	return {"seed": int(rank), "score": score, "abbrev": abbrev}
 
 
 @app.route("/api/setscore/<int:rnd>/<region>/<int:seed1>/<int:score1>/<int:seed2>/<int:score2>/<fav>/<spread>")
