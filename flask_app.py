@@ -65,6 +65,8 @@ def get_pair(game, playersAndTeams):
 		if len(game) >=6:
 			fav = game[4]
 			spread = game[5]
+			if spread == '0':
+				spread = 'EVEN'
 			time_left = get_time_left(game)
 		t1 = getit(0, playersAndTeams, game)
 		t2 = getit(1, playersAndTeams, game)
@@ -216,6 +218,7 @@ def get_single_game(game_id):
 
 	return jsonify(winner)
 
+
 def get_game_score(game_id):
 	req = 'http://www.espn.com/mens-college-basketball/game?gameId=%s' % game_id
 	soup = getSoup(req)
@@ -225,15 +228,16 @@ def get_game_score(game_id):
 	regionTag = soup.find("div", {"class":"game-details header"})
 	# "MEN'S BASKETBALL CHAMPIONSHIP - WEST REGION - 2ND ROUND"
 	# "MEN'S BASKETBALL CHAMPIONSHIP - WEST REGION - SWEET 16"
-	if "SWEET" in regionTag.text:
-		region = regionTag.text.replace("MEN'S BASKETBALL CHAMPIONSHIP - ", "").replace(" ROUND", "").replace(" REGION - SWEET 16", "")
+	reg = regionTag.text.replace("MEN'S BASKETBALL CHAMPIONSHIP - ", "")
+	if "SWEET" in reg:
+		region = reg.replace(" REGION - SWEET 16", "")
 		rnd = 3
 	else:
-		reg = regionTag.text.replace("MEN'S BASKETBALL CHAMPIONSHIP - ", "").replace(" ROUND", "").replace(" REGION -", "")
+		reg = reg.replace(" ROUND", "").replace(" REGION -", "")
 		region, rnd = reg.split()
 		rnd = int(rnd[0])
 
-	result.append(scrapeTeam(soup,'team away'))
+	result.append(scrapeTeam(soup, 'team away'))
 	result.append(scrapeTeam(soup, 'team home'))
 
 	try:
@@ -250,11 +254,22 @@ def get_game_score(game_id):
 
 	try:
 		lineDivTag = soup.find("div", {"class": "odds-details"})
-		fav, line = lineDivTag.findNext("li").text.replace("Line: ", "").split()
+		line_text = lineDivTag.findNext("li").text
+		if 'EVEN' in line_text:
+			fav = get_home_team_name(soup)
+			line = "0"
+		else:
+			fav, line = lineDivTag.findNext("li").text.replace("Line: ", "").split()
 	except:
 		fav, line = None, None
 
 	return result, fav, line, region, rnd, timeLeft
+
+
+def get_home_team_name(soup):
+	teamTag = soup.find("div", {"class": 'team home'})
+	abbrev = teamTag.find("span", {"class": "abbrev"}).text
+	return abbrev
 
 
 def scrapeTeam(soup, teamClass):
