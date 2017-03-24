@@ -223,9 +223,15 @@ def get_game_score(game_id):
 	result = []
 
 	regionTag = soup.find("div", {"class":"game-details header"})
-	reg = regionTag.text.replace("MEN'S BASKETBALL CHAMPIONSHIP - ", "").replace(" ROUND", "").replace(" REGION -", "")
-	region, rnd = reg.split()
-	rnd = int(rnd[0])
+	# "MEN'S BASKETBALL CHAMPIONSHIP - WEST REGION - 2ND ROUND"
+	# "MEN'S BASKETBALL CHAMPIONSHIP - WEST REGION - SWEET 16"
+	if "SWEET" in regionTag.text:
+		region = regionTag.text.replace("MEN'S BASKETBALL CHAMPIONSHIP - ", "").replace(" ROUND", "").replace(" REGION - SWEET 16", "")
+		rnd = 3
+	else:
+		reg = regionTag.text.replace("MEN'S BASKETBALL CHAMPIONSHIP - ", "").replace(" ROUND", "").replace(" REGION -", "")
+		region, rnd = reg.split()
+		rnd = int(rnd[0])
 
 	result.append(scrapeTeam(soup,'team away'))
 	result.append(scrapeTeam(soup, 'team home'))
