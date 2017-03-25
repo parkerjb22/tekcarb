@@ -61,8 +61,8 @@
         vm.orderTeams = (function(teams){
             var round = {}
             round['EAST'] = teams['EAST']
-            round['WEST'] = teams['WEST']
             round['MIDWEST'] = teams['MIDWEST']
+            round['WEST'] = teams['WEST']
             round['SOUTH'] = teams['SOUTH']
             return round
         })

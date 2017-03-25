@@ -3,31 +3,33 @@ from bs4 import BeautifulSoup
 from datetime import datetime, timedelta
 from collections import OrderedDict
 import requests
-import json, os, math
+import json
+import os
+import math
 
 app = Flask(__name__)
 
 
-def readFromFile(fileName):
+def read_from_file(file_name):
 	my_dir = os.path.dirname(__file__)
-	file_path = os.path.join(my_dir, 'data/%s.json' % fileName)
+	file_path = os.path.join(my_dir, 'data/%s.json' % file_name)
 
 	with open(file_path) as data_file:
 		data = json.load(data_file)
 		return data
 
 
-def writeToFile(fileName, data):
+def write_to_file(file_name, data):
 	my_dir = os.path.dirname(__file__)
-	file_path = os.path.join(my_dir, 'data/%s.json' % fileName)
+	file_path = os.path.join(my_dir, 'data/%s.json' % file_name)
 
 	with open(file_path, "w") as jsonFile:
 		json.dump(data, jsonFile)
 
 
 @app.route("/api/players")
-def getPlayers():
-	players = readFromFile('players')
+def get_players():
+	players = read_from_file('players')
 	return jsonify(list(players.keys()))
 
 
@@ -38,9 +40,9 @@ def get_round(rnd):
 		return get_later_round(rnd)
 
 	rnd_str = "round%s" % rnd
-	teams = readFromFile('teams')
-	rounds = readFromFile('rounds')
-	players = readFromFile('players')
+	teams = read_from_file('teams')
+	rounds = read_from_file('rounds')
+	players = read_from_file('players')
 
 	result = {}
 	for region, team_list in teams.items():
@@ -58,9 +60,9 @@ def get_round(rnd):
 
 def get_later_round(rnd):
 	rnd_str = "round%s" % rnd
-	teams = readFromFile('teams')
-	rounds = readFromFile('rounds')
-	players = readFromFile('players')
+	teams = read_from_file('teams')
+	rounds = read_from_file('rounds')
+	players = read_from_file('players')
 
 	players_and_teams = {}
 	for region, team_list in teams.items():
@@ -89,14 +91,14 @@ def get_pair(game, players_and_teams):
 	t1, t2 = None, None
 	fav, spread, time_left = None, 0, None
 	if game:
-		if len(game) >=6:
+		if len(game) >= 6:
 			fav = game[4]
 			spread = game[5]
 			if spread == '0':
 				spread = 'EVEN'
 			time_left = get_time_left(game)
-		t1 = getit(0, players_and_teams, game)
-		t2 = getit(1, players_and_teams, game)
+		t1 = get_it(0, players_and_teams, game)
+		t2 = get_it(1, players_and_teams, game)
 
 	return {"teams": [t1, t2], "spread": spread, "fav": fav, "timeLeft": time_left}
 
@@ -116,9 +118,9 @@ def get_players_and_teams(players, rnd_str, team_list):
 
 def set_late_round_winner(rnd, result, region):
 	rnd_str = "round%s" % rnd
-	teams = readFromFile('teams')
-	players = readFromFile('players')
-	rounds = readFromFile('rounds')
+	teams = read_from_file('teams')
+	players = read_from_file('players')
+	rounds = read_from_file('rounds')
 
 	players_and_teams = {}
 	for team_list in teams.items():
@@ -134,7 +136,7 @@ def set_late_round_winner(rnd, result, region):
 
 	winner, winner_id, fav, spread = get_winner(found_game, players_and_teams)
 
-	updateTables(winner, rnd+1, region, winner_id)
+	update_tables(winner, rnd+1, region, winner_id)
 
 	return {"winner": winner, "round": rnd + 1, "region": region, "winner_id": winner_id}
 
@@ -145,13 +147,12 @@ def set_winner(rnd, region, result):
 		return set_late_round_winner(rnd, result, region)
 
 	rnd_str = "round%s" % rnd
-	teams = readFromFile('teams')
-	players = readFromFile('players')
-	rounds = readFromFile('rounds')
+	teams = read_from_file('teams')
+	players = read_from_file('players')
+	rounds = read_from_file('rounds')
 
-	players_and_teams = {}
-	for team_list in teams.items():
-		players_and_teams = get_players_and_teams(players, rnd_str, team_list, players_and_teams)
+	team_list = teams.get(region)
+	players_and_teams = get_players_and_teams(players, rnd_str, team_list)
 
 	# find the game
 	seed1 = result[0].get("seed")
@@ -164,7 +165,7 @@ def set_winner(rnd, region, result):
 
 	winner, seed_winner, fav, spread = get_winner(found_game, players_and_teams)
 
-	updateTables(winner, rnd+1, region, seed_winner)
+	update_tables(winner, rnd+1, region, seed_winner)
 
 	return {"winner": winner, "round": rnd + 1, "region": region, "seed": seed_winner}
 
@@ -194,6 +195,7 @@ def get_winner(game, players_and_teams):
 
 	return winner, winner_id, fav, spread
 
+
 def get_time_left(game):
 	time_left = 'Final'
 	quarter, q_sup = None, None
@@ -209,14 +211,14 @@ def get_time_left(game):
 	return {"time": time_left, "quarter": quarter, "sup": q_sup}
 
 
-def getit(i, playersAndTeams, game):
+def get_it(i, players_and_teams, game):
 	t1 = None
 	if game[i] is not None:
 		if len(game) >= 6:
 			team_score = game[i + 2]
 		else:
 			team_score = 0
-		t1 = playersAndTeams[game[i]]
+		t1 = players_and_teams[game[i]]
 		t1["score"] = team_score
 
 	return t1
@@ -227,21 +229,11 @@ def index():
 	return render_template('index.html')
 
 
-@app.route("/api/addgame/<gameId>")
-def add_game(gameId):
-	games = readFromFile("games")
-	if gameId not in games["games"]:
-		games["games"].append(gameId)
-	writeToFile("games", games)
-
-	return jsonify(games)
-
-@app.route("/api/removegame/<gameId>")
-def remove_game(gameId):
-	games = readFromFile("games")
-	if gameId in games["games"]:
-		del games["games"][gameId]
-	writeToFile("games", games)
+def remove_game(game_id):
+	games = read_from_file("games")
+	if game_id in games["games"]:
+		del games["games"][game_id]
+	write_to_file("games", games)
 
 	return jsonify(games)
 
@@ -259,15 +251,17 @@ def game_started(game_time):
 
 @app.route("/api/updatescore/v2")
 def get_game_score_web():
-	games = readFromFile("games")
+	games = read_from_file("games")
 	updating_games = []
 	for game_id, game in games.get("games").items():
 		if game_started(game):
-			result, fav, spread, region, rnd, timeLeft = get_game_score(game_id)
-			setscore(rnd, region, result[0].get("seed"), result[0].get("score"), result[1].get("seed"), result[1].get("score"), fav, spread, timeLeft)
-			if 'Final' in timeLeft:
+			result, fav, spread, region, rnd, time_left = get_game_score(game_id)
+			s1, score1 = result[0].get("seed"), result[0].get("score")
+			s2, score2 = result[1].get("seed"), result[1].get("score")
+			setscore(rnd, region, s1, score1, s2, score2, fav, spread, time_left)
+			if 'Final' in time_left:
 				remove_game(game_id)
-				set_winner(rnd, region, result, fav, spread)
+				set_winner(rnd, region, result)
 			else:
 				updating_games.append(game_id)
 	return jsonify(updating_games)
@@ -275,9 +269,11 @@ def get_game_score_web():
 
 @app.route("/api/game/<game_id>")
 def get_single_game(game_id):
-	result, fav, spread, region, rnd, timeLeft = get_game_score(game_id)
-	setscore(rnd, region, result[0].get("seed"), result[0].get("score"), result[1].get("seed"), result[1].get("score"), fav, spread, timeLeft)
-	winner = set_winner(rnd, region, result, fav, spread)
+	result, fav, spread, region, rnd, time_left = get_game_score(game_id)
+	s1, score1 = result[0].get("seed"), result[0].get("score")
+	s2, score2 = result[1].get("seed"), result[1].get("score")
+	setscore(rnd, region, s1, score1, s2, score2, fav, spread, time_left)
+	winner = set_winner(rnd, region, result)
 
 	return jsonify(winner)
 
@@ -286,15 +282,42 @@ def get_game_score(game_id):
 	req = 'http://www.espn.com/mens-college-basketball/game?gameId=%s' % game_id
 	soup = getSoup(req)
 
-	result = []
+	region, rnd = get_region_and_round(soup)
 
-	regionTag = soup.find("div", {"class":"game-details header"})
-	# "MEN'S BASKETBALL CHAMPIONSHIP - WEST REGION - 2ND ROUND"
-	# "MEN'S BASKETBALL CHAMPIONSHIP - WEST REGION - SWEET 16"
-	# "MEN'S BASKETBALL CHAMPIONSHIP - WEST REGION - ELITE 8"
-	# "MEN'S BASKETBALL CHAMPIONSHIP - WEST REGION - FINAL FOUR"
-	# "MEN'S BASKETBALL CHAMPIONSHIP - NATIONAL CHAMPIONSHIP"
-	reg = regionTag.text.replace("MEN'S BASKETBALL CHAMPIONSHIP - ", "")
+	result = [
+		scrape_team(soup, 'team away'),
+		scrape_team(soup, 'team home')
+	]
+
+	try:
+		time_tag = soup.find("span", {"class": "game-time"})
+		time_left = time_tag.text
+		if time_left == 'Halftime':
+			time_left = 'Half'
+		elif time_left == '':
+			time_left = "0:00"
+		else:
+			time_left = time_tag.text.replace(" - ", " ").replace(" Half", "")
+	except:
+		time_left = "0:00"
+
+	try:
+		line_div_tag = soup.find("div", {"class": "odds-details"})
+		line_text = line_div_tag.findNext("li").text
+		if 'EVEN' in line_text:
+			fav = result[0].get("abbrev")
+			line = "0"
+		else:
+			fav, line = line_div_tag.findNext("li").text.replace("Line: ", "").split()
+	except:
+		fav, line = None, None
+
+	return result, fav, line, region, rnd, time_left
+
+
+def get_region_and_round(soup):
+	region_tag = soup.find("div", {"class": "game-details header"})
+	reg = region_tag.text.replace("MEN'S BASKETBALL CHAMPIONSHIP - ", "")
 	if "NATIONAL" in reg:
 		region = None
 		rnd = 6
@@ -312,81 +335,41 @@ def get_game_score(game_id):
 		region, rnd = reg.split()
 		rnd = int(rnd[0])
 
-	result.append(scrapeTeam(soup, 'team away'))
-	result.append(scrapeTeam(soup, 'team home'))
+	return region, rnd
 
+
+def scrape_team(soup, team_class):
+	team_tag = soup.find("div", {"class": team_class})
+	rank = team_tag.find("span", {"class": "rank"}).text
+	abbrev = team_tag.find("span", {"class": "abbrev"}).text
 	try:
-		timeTag = soup.find("span", {"class": "game-time"})
-		timeLeft = timeTag.text
-		if timeLeft == 'Halftime':
-			timeLeft = 'Half'
-		elif timeLeft == '':
-			timeLeft = "0:00"
-		else:
-			timeLeft = timeTag.text.replace(" - ", " ").replace(" Half", "")
-	except:
-		timeLeft = "0:00"
-
-	try:
-		lineDivTag = soup.find("div", {"class": "odds-details"})
-		line_text = lineDivTag.findNext("li").text
-		if 'EVEN' in line_text:
-			fav = result[0].get("abbrev")
-			line = "0"
-		else:
-			fav, line = lineDivTag.findNext("li").text.replace("Line: ", "").split()
-	except:
-		fav, line = None, None
-
-	return result, fav, line, region, rnd, timeLeft
-
-
-def scrapeTeam(soup, teamClass):
-	teamTag = soup.find("div", {"class": teamClass})
-	rank = teamTag.find("span", {"class": "rank"}).text
-	abbrev = teamTag.find("span", {"class": "abbrev"}).text
-	try:
-		score = int(teamTag.find("div", {"class": "score"}).text)
+		score = int(team_tag.find("div", {"class": "score"}).text)
 	except:
 		score = 0
 	return {"seed": int(rank), "score": score, "abbrev": abbrev}
 
 
-@app.route("/api/setscore/<int:rnd>/<region>/<int:seed1>/<int:score1>/<int:seed2>/<int:score2>/<fav>/<spread>")
-def setscore(rnd, region, seed1, score1, seed2, score2, fav, spread, timeLeft):
+def setscore(rnd, region, seed1, score1, seed2, score2, fav, spread, time_left):
 	round_str = "round%s" % rnd
-	rounds = readFromFile('rounds')
-	matchup, slot = getMatchupAndSlot(rnd, seed1)
+	rounds = read_from_file('rounds')
+	matchup, slot = get_matchup_and_slot(rnd, seed1)
 	while len(rounds[region][round_str][matchup]) < 7:
 		rounds[region][round_str][matchup].append(None)
 
 	rounds[region][round_str][matchup][slot+2] = score1
-	matchup, slot = getMatchupAndSlot(rnd, seed2)
+	matchup, slot = get_matchup_and_slot(rnd, seed2)
 	rounds[region][round_str][matchup][slot+2] = score2
 	rounds[region][round_str][matchup][4] = fav
 	rounds[region][round_str][matchup][5] = spread
-	rounds[region][round_str][matchup][6] = timeLeft
+	rounds[region][round_str][matchup][6] = time_left
 
-	writeToFile('rounds', rounds)
-	return 'set em'
-
-@app.route("/api/setgameid/<int:rnd>/<region>/<int:seed>/<int:game_id>")
-def setgameid(rnd, region, seed, game_id):
-	round_str = "round%s" % rnd
-	rounds = readFromFile('rounds')
-
-	matchup, slot = getMatchupAndSlot(rnd, seed)
-
-	if len(rounds[region][round_str][matchup]) == 2:
-		rounds[region][round_str][matchup].append(game_id)
-
-	writeToFile('rounds', rounds)
+	write_to_file('rounds', rounds)
 	return 'set em'
 
 
 @app.route("/api/current_round")
 def get_current_round():
-	games = readFromFile("games")
+	games = read_from_file("games")
 	rounds = games.get("rounds")
 	rounds = OrderedDict(sorted(rounds.items()))
 	result = find_current_round(rounds)
@@ -411,34 +394,55 @@ def find_current_round(rounds):
 
 
 @app.route("/api/update/<player_name>/<int:rnd>/<region>/<int:seed>")
-def updateTables(player_name, rnd, region, seed):
+def update_tables(player_name, rnd, region, seed):
 	if rnd >= 5:
-		team_id = seed
-		# team = getTeamById(team_id)
-		updatePlayerFile(player_name, rnd, team_id)
-		updateRoundFile(None, rnd, team_id)
+		update_player_file(player_name, rnd, seed)
 	else:
 		team_id, team = getTeamBySeed(region, seed)
-		updatePlayerFile(player_name, rnd, team_id)
-		updateRoundFile(region, rnd, seed)
+		update_player_file(player_name, rnd, team_id)
+
+	update_round_file(region, rnd, seed)
 
 	return 'got em'
 
 
-def updateRoundFile(region, rnd, seed):
+def update_round_file(region, rnd, seed):
 	round_str = "round%s" % rnd
-	rounds = readFromFile('rounds')
+	rounds = read_from_file('rounds')
 
 	if rnd >= 5:
-		pass
+		matchup, slot = get_late_round_matchup_and_slot(region, rnd)
+		rounds[round_str][matchup][slot] = seed
 
 	else:
-		matchup, slot = getMatchupAndSlot(rnd, seed)
+		matchup, slot = get_matchup_and_slot(rnd, seed)
 		rounds[region][round_str][matchup][slot] = seed
 
-	writeToFile('rounds', rounds)
+	write_to_file('rounds', rounds)
 
-def getMatchupAndSlot(rnd, seed):
+
+def get_late_round_matchup_and_slot(region, rnd):
+	matchup, slot = None, None
+	if rnd == 5:
+		if region == 'EAST':
+			matchup, slot = 0, 0
+		elif region == 'MIDWEST':
+			matchup, slot = 0, 1
+		elif region == 'SOUTH':
+			matchup, slot = 1, 1
+		elif region == 'WEST':
+			matchup, slot = 1, 0
+
+	elif rnd == 6:
+		if region in ['EAST', 'MIDWEST']:
+			matchup, slot = 0, 0
+		elif region in ['SOUTH', 'WEST']:
+			matchup, slot = 0, 1
+
+	return matchup, slot
+
+
+def get_matchup_and_slot(rnd, seed):
 	matchup, slot = None, None
 	if rnd == 1:
 		if seed == 1:
@@ -510,24 +514,25 @@ def getMatchupAndSlot(rnd, seed):
 
 	return matchup, slot
 
-def updatePlayerFile(player, rnd, team_id):
+
+def update_player_file(player, rnd, team_id):
 	round_str = "round%s" % rnd
-	players = readFromFile('players')
+	players = read_from_file('players')
 
 	players[player][round_str].append(team_id)
 
-	writeToFile('players', players)
+	write_to_file('players', players)
 
 
 def getTeamById(team_id):
-	teams = readFromFile('teams')
+	teams = read_from_file('teams')
 	for region in teams.items():
 		if team_id in region:
 			return region.get(team_id)[0]
 
 
 def getTeamBySeed(region, seed):
-	teams = readFromFile('teams')
+	teams = read_from_file('teams')
 	teamList = teams.get(region)
 	for id, curr_team in teamList.items():
 		if curr_team[1] == seed:
