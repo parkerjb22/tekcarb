@@ -4,6 +4,7 @@ from datetime import datetime, timedelta
 from bs4 import BeautifulSoup
 import requests
 import time
+import sys
 
 
 def set_late_round_winner(rnd, result, region):
@@ -367,6 +368,7 @@ def get_late_round_matchup_and_slot(region, rnd):
 
 
 if __name__ == '__main__':
+	duration = 5
 	while True:
-		time.sleep(2)
+		time.sleep(duration)
 		get_game_score_web()
