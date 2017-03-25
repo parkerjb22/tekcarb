@@ -114,50 +114,85 @@ def get_players_and_teams(players, rnd_str, team_list):
 	return players_and_teams
 
 
-def set_winner(rnd, region, result, fav, spread):
-	# I have the seed, rnd and region of the teams, that should give me the players
-	rndStr = "round%s" % rnd
+def set_late_round_winner(rnd, result, region):
+	rnd_str = "round%s" % rnd
 	teams = readFromFile('teams')
 	players = readFromFile('players')
 	rounds = readFromFile('rounds')
 
-	# this will get each player and seed for this round
-	teamList = teams.get(region)
-	playersAndTeams = get_players_and_teams(players, rndStr, teamList)
+	players_and_teams = {}
+	for team_list in teams.items():
+		players_and_teams = get_players_and_teams_by_team_id(players, rnd_str, team_list, players_and_teams)
+
+	team_id_1 = result[0].get("team_id")
+	team_id_2 = result[1].get("team_id")
+	found_game = None
+	for game in rounds.get(rnd_str):
+		if game[0] in (team_id_1, team_id_2) and game[1] in (team_id_1, team_id_2):
+			found_game = game
+			break
+
+	winner, winner_id, fav, spread = get_winner(found_game, players_and_teams)
+
+	updateTables(winner, rnd+1, region, winner_id)
+
+	return {"winner": winner, "round": rnd + 1, "region": region, "winner_id": winner_id}
+
+
+def set_winner(rnd, region, result):
+	# I have the seed, rnd and region of the teams, that should give me the players
+	if rnd >= 5:
+		return set_late_round_winner(rnd, result, region)
+
+	rnd_str = "round%s" % rnd
+	teams = readFromFile('teams')
+	players = readFromFile('players')
+	rounds = readFromFile('rounds')
+
+	players_and_teams = {}
+	for team_list in teams.items():
+		players_and_teams = get_players_and_teams(players, rnd_str, team_list, players_and_teams)
 
 	# find the game
 	seed1 = result[0].get("seed")
 	seed2 = result[1].get("seed")
 	found_game = None
-	for game in rounds.get(region).get(rndStr):
+	for game in rounds.get(region).get(rnd_str):
 		if game[0] in (seed1, seed2) and game[1] in (seed1, seed2):
 			found_game = game
 			break
 
-	if found_game is not None:
-		fav = found_game[4]
-		spread = math.floor(float(found_game[5]))
-		spread = int(spread)
-
-		if found_game[2] >= found_game[3]:
-			seed_winner = found_game[0]
-		else:
-			seed_winner = found_game[1]
-
-		if playersAndTeams[found_game[0]].get("team") == fav:
-			if found_game[2] + spread >= found_game[3]:
-				winner = playersAndTeams[found_game[0]].get("player")
-			else:
-				winner = playersAndTeams[found_game[1]].get("player")
-		else:
-			if found_game[3] + spread >= found_game[2]:
-				winner = playersAndTeams[found_game[1]].get("player")
-			else:
-				winner = playersAndTeams[found_game[0]].get("player")
+	winner, seed_winner, fav, spread = get_winner(found_game, players_and_teams)
 
 	updateTables(winner, rnd+1, region, seed_winner)
 
 	return {"winner": winner, "round": rnd + 1, "region": region, "seed": seed_winner}
+
+
+def get_winner(game, players_and_teams):
+	winner, winner_id, fav, spread = None, None, None, None
+	if game is not None:
+		fav = game[4]
+		spread = math.floor(float(game[5]))
+		spread = int(spread)
+
+		if game[2] >= game[3]:
+			winner_id = game[0]
+		else:
+			winner_id = game[1]
+
+		if players_and_teams[game[0]].get("team") == fav:
+			if game[2] + spread >= game[3]:
+				winner = players_and_teams[game[0]].get("player")
+			else:
+				winner = players_and_teams[game[1]].get("player")
+		else:
+			if game[3] + spread >= game[2]:
+				winner = players_and_teams[game[1]].get("player")
+			else:
+				winner = players_and_teams[game[0]].get("player")
+
+	return winner, winner_id, fav, spread
 
 def get_time_left(game):
 	time_left = 'Final'
@@ -377,9 +412,15 @@ def find_current_round(rounds):
 
 @app.route("/api/update/<player_name>/<int:rnd>/<region>/<int:seed>")
 def updateTables(player_name, rnd, region, seed):
-	team_id, team = getTeamBySeed(region, seed)
-	updatePlayerFile(player_name, rnd, team_id)
-	updateRoundFile(region, rnd, seed)
+	if rnd >= 5:
+		team_id = seed
+		# team = getTeamById(team_id)
+		updatePlayerFile(player_name, rnd, team_id)
+		updateRoundFile(None, rnd, team_id)
+	else:
+		team_id, team = getTeamBySeed(region, seed)
+		updatePlayerFile(player_name, rnd, team_id)
+		updateRoundFile(region, rnd, seed)
 
 	return 'got em'
 
@@ -388,9 +429,13 @@ def updateRoundFile(region, rnd, seed):
 	round_str = "round%s" % rnd
 	rounds = readFromFile('rounds')
 
-	matchup, slot = getMatchupAndSlot(rnd, seed)
+	if rnd >= 5:
+		pass
 
-	rounds[region][round_str][matchup][slot] = seed
+	else:
+		matchup, slot = getMatchupAndSlot(rnd, seed)
+		rounds[region][round_str][matchup][slot] = seed
+
 	writeToFile('rounds', rounds)
 
 def getMatchupAndSlot(rnd, seed):
@@ -472,6 +517,13 @@ def updatePlayerFile(player, rnd, team_id):
 	players[player][round_str].append(team_id)
 
 	writeToFile('players', players)
+
+
+def getTeamById(team_id):
+	teams = readFromFile('teams')
+	for region in teams.items():
+		if team_id in region:
+			return region.get(team_id)[0]
 
 
 def getTeamBySeed(region, seed):
