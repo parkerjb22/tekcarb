@@ -164,7 +164,7 @@ def get_time_left(game):
 	quarter, q_sup = None, None
 	if len(game) == 7:
 		entire_string = game[6]
-		if entire_string in ['Final', 'Half', '0:00']:
+		if entire_string in ['Final/OT', 'Final', 'Half', '0:00']:
 			time_left = entire_string
 		else:
 			time_left, quarter = entire_string.split()
@@ -230,7 +230,7 @@ def get_game_score_web():
 		if game_started(game):
 			result, fav, spread, region, rnd, timeLeft = get_game_score(game_id)
 			setscore(rnd, region, result[0].get("seed"), result[0].get("score"), result[1].get("seed"), result[1].get("score"), fav, spread, timeLeft)
-			if timeLeft == 'Final':
+			if 'Final' in timeLeft:
 				remove_game(game_id)
 				set_winner(rnd, region, result, fav, spread)
 			else:
