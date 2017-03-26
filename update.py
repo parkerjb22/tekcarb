@@ -4,7 +4,6 @@ from datetime import datetime, timedelta
 from bs4 import BeautifulSoup
 import requests
 import time
-import sys
 
 
 def set_late_round_winner(rnd, result, region):
@@ -14,7 +13,7 @@ def set_late_round_winner(rnd, result, region):
 	rounds = read_from_file('rounds')
 
 	players_and_teams = {}
-	for team_list in teams.items():
+	for region, team_list in teams.items():
 		players_and_teams = get_players_and_teams_by_team_id(players, rnd_str, team_list, players_and_teams)
 
 	team_id_1 = result[0].get("team_id")
@@ -55,7 +54,8 @@ def set_winner(rnd, region, result):
 			break
 
 	winner, seed_winner, fav, spread = get_winner(found_game, players_and_teams)
-
+	if rnd == 4:
+		seed_winner = getTeamBySeed(region, seed_winner)[0]
 	update_tables(winner, rnd+1, region, seed_winner)
 
 	return {"winner": winner, "round": rnd + 1, "region": region, "seed": seed_winner}
@@ -97,8 +97,8 @@ def get_game_score_web():
 			s2, score2 = result[1].get("seed"), result[1].get("score")
 			setscore(rnd, region, s1, score1, s2, score2, fav, spread, time_left)
 			if 'Final' in time_left:
-				remove_game(game_id)
 				set_winner(rnd, region, result)
+				remove_game(game_id)
 			else:
 				updating_games.append(game_id)
 
