@@ -93,8 +93,14 @@ def get_game_score_web():
 	for game_id, game in games.get("games").items():
 		if game_started(game):
 			result, fav, spread, region, rnd, time_left = get_game_score(game_id)
-			s1, score1 = result[0].get("seed"), result[0].get("score")
-			s2, score2 = result[1].get("seed"), result[1].get("score")
+			score1 = result[0].get("score")
+			score2 = result[1].get("score")
+			if rnd >= 5:
+				s1 = result[0].get("abbrev")
+				s2 = result[1].get("abbrev")
+			else:
+				s1, score1 = result[0].get("seed"), result[0].get("score")
+				s2, score2 = result[1].get("seed"), result[1].get("score")
 			setscore(rnd, region, s1, score1, s2, score2, fav, spread, time_left)
 			if 'Final' in time_left:
 				set_winner(rnd, region, result)
@@ -162,18 +168,50 @@ def update_round_file(region, rnd, seed):
 def setscore(rnd, region, seed1, score1, seed2, score2, fav, spread, time_left):
 	round_str = "round%s" % rnd
 	rounds = read_from_file('rounds')
-	matchup, slot = get_matchup_and_slot(rnd, seed1)
-	while len(rounds[region][round_str][matchup]) < 7:
-		rounds[region][round_str][matchup].append(None)
 
-	rounds[region][round_str][matchup][slot+2] = score1
-	matchup, slot = get_matchup_and_slot(rnd, seed2)
-	rounds[region][round_str][matchup][slot+2] = score2
-	rounds[region][round_str][matchup][4] = fav
-	rounds[region][round_str][matchup][5] = spread
-	rounds[region][round_str][matchup][6] = time_left
+	if rnd < 5:
+		matchup, slot = get_matchup_and_slot(rnd, seed1)
+		while len(rounds[region][round_str][matchup]) < 7:
+			rounds[region][round_str][matchup].append(None)
+
+		rounds[region][round_str][matchup][slot+2] = score1
+		matchup, slot = get_matchup_and_slot(rnd, seed2)
+		rounds[region][round_str][matchup][slot+2] = score2
+		rounds[region][round_str][matchup][4] = fav
+		rounds[region][round_str][matchup][5] = spread
+		rounds[region][round_str][matchup][6] = time_left
+
+	else:
+		matchup, slot = hacky_hack(seed1, rnd)
+		while len(rounds[round_str][matchup]) < 7:
+			rounds[round_str][matchup].append(None)
+
+		rounds[round_str][matchup][slot + 2] = score1
+		matchup, slot = hacky_hack(seed2, rnd)
+		rounds[round_str][matchup][slot + 2] = score2
+		rounds[round_str][matchup][4] = fav
+		rounds[round_str][matchup][5] = spread
+		rounds[round_str][matchup][6] = time_left
 
 	write_to_file('rounds', rounds)
+
+
+def hacky_hack(seed, rnd):
+	if rnd == 5:
+		if seed == 'SC':
+			matchup, slot = 0, 0
+		elif seed == 'GONZ':
+			matchup, slot = 0, 1
+		elif seed == 'ORE':
+			matchup, slot = 1, 0
+		else:
+			matchup, slot = 1, 1
+	else:
+		if seed in ['SC', 'GONZ']:
+			matchup, slot = 0, 0
+		else:
+			matchup, slot = 0, 1
+	return matchup, slot
 
 
 def getSoup(url):
