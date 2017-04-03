@@ -13,11 +13,11 @@ def set_late_round_winner(rnd, result, region):
 	rounds = read_from_file('rounds')
 
 	players_and_teams = {}
-	for region, team_list in teams.items():
+	for reg, team_list in teams.items():
 		players_and_teams = get_players_and_teams_by_team_id(players, rnd_str, team_list, players_and_teams)
 
-	team_id_1 = result[0].get("team_id")
-	team_id_2 = result[1].get("team_id")
+	team_id_1 = getTeamIdByAbbrev(result[0].get("abbrev"))
+	team_id_2 = getTeamIdByAbbrev(result[1].get("abbrev"))
 	found_game = None
 	for game in rounds.get(rnd_str):
 		if game[0] in (team_id_1, team_id_2) and game[1] in (team_id_1, team_id_2):
@@ -114,14 +114,16 @@ def get_game_score_web():
 def remove_game(game_id):
 	games = read_from_file("games")
 	if game_id in games["games"]:
-		del games["games"][game_id]
+		games["games"][game_id]["finished"] = True
 	write_to_file("games", games)
 
 
-def game_started(game_time):
+def game_started(game):
+	if "finished" in game and game["finished"]:
+		return False
 	now = datetime.utcnow()
-	date = game_time["date"]
-	start_time = game_time["starttime"]
+	date = game["date"]
+	start_time = game["starttime"]
 	g_str = '%s 2017  %sM' % (date, start_time)
 	g_time = datetime.strptime(g_str, '%b %d %Y %I:%M%p')
 	g_utc = g_time + timedelta(hours=5)
@@ -155,7 +157,7 @@ def update_round_file(region, rnd, seed):
 	rounds = read_from_file('rounds')
 
 	if rnd >= 5:
-		matchup, slot = get_late_round_matchup_and_slot(region, rnd)
+		matchup, slot = hacky_hack(seed, rnd)
 		rounds[round_str][matchup][slot] = seed
 
 	else:
@@ -207,7 +209,7 @@ def hacky_hack(seed, rnd):
 		else:
 			matchup, slot = 1, 1
 	else:
-		if seed in ['SC', 'GONZ']:
+		if seed in ['SC', 'GONZ', 4, 13]:
 			matchup, slot = 0, 0
 		else:
 			matchup, slot = 0, 1
@@ -297,6 +299,17 @@ def getTeamById(team_id):
 	for region in teams.items():
 		if team_id in region:
 			return region.get(team_id)[0]
+
+
+def getTeamIdByAbbrev(abbrev):
+	teams = read_from_file('teams')
+	for key, region in teams.items():
+		for id, curr_team in region.items():
+			if curr_team[0] == abbrev:
+				team_id = id
+				break
+
+	return int(team_id)
 
 
 def getTeamBySeed(region, seed):
@@ -397,9 +410,9 @@ def get_late_round_matchup_and_slot(region, rnd):
 			matchup, slot = 1, 0
 
 	elif rnd == 6:
-		if region in ['EAST', 'MIDWEST']:
+		if region in ['EAST', 'WEST']:
 			matchup, slot = 0, 0
-		elif region in ['SOUTH', 'WEST']:
+		elif region in ['SOUTH', 'MIDWEST']:
 			matchup, slot = 0, 1
 
 	return matchup, slot
@@ -408,5 +421,5 @@ def get_late_round_matchup_and_slot(region, rnd):
 if __name__ == '__main__':
 	duration = 5
 	while True:
-		time.sleep(duration)
 		get_game_score_web()
+		time.sleep(duration)

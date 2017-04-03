@@ -21,7 +21,9 @@
 
                 $interval(function() {
                     getRound(vm.rnd)
-                    getRound(vm.rnd + 1)
+                    if (vm.rnd < 6) {
+                        getRound(vm.rnd + 1)
+                    }
                 }, 1000);
             })
 
